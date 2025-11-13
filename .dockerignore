@@ -1,0 +1,26 @@
+node_modules
+npm-debug.log
+.env
+.git
+.gitignore
+README.md
+Dockerfile
+.dockerignore
+# Пользовательские данные (должны быть в /data внутри контейнера)
+data/
+uploads/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+# Старые файлы
+backend/data.sqlite*
+backend/uploads/*
+backend/db-old.js
+backend/server-old.js
+# Логи и временные файлы
+*.log
+logs/
+*.tmp
+*.temp
+# Docker-compose файлы (для локальной разработки)
+docker-compose.yml

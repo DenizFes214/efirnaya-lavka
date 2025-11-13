@@ -1,0 +1,166 @@
+import sqlite3 from 'sqlite3';
+
+const db = new sqlite3.Database(process.env.DB_PATH || 'data.sqlite');
+
+// Создание всех необходимых таблиц
+db.serialize(() => {
+  db.run(`CREATE TABLE IF NOT EXISTS categories(
+    id INTEGER PRIMARY KEY AUTOINCREMENT, 
+    name TEXT UNIQUE,
+    slug TEXT,
+    description TEXT,
+    image_url TEXT,
+    position INTEGER DEFAULT 0
+  )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS products(
+    id INTEGER PRIMARY KEY AUTOINCREMENT, 
+    category_id INTEGER, 
+    name TEXT, 
+    price REAL, 
+    description TEXT, 
+    stock TEXT,
+    image_url TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS product_images(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    product_id INTEGER,
+    url TEXT,
+    position INTEGER
+  )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS reviews(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    product_id INTEGER,
+    user_id INTEGER,
+    username TEXT,
+    text TEXT,
+    rating INTEGER,
+    approved INTEGER DEFAULT 0,
+    admin_comment TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS orders(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    username TEXT,
+    total REAL,
+    comment TEXT,
+    delivery_method TEXT,
+    delivery_address TEXT,
+    delivery_point TEXT,
+    status TEXT DEFAULT 'new',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS order_items(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER,
+    product_id INTEGER,
+    name TEXT,
+    price REAL,
+    qty INTEGER
+  )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS favorites(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_telegram_id INTEGER,
+    product_id INTEGER,
+    UNIQUE(user_telegram_id, product_id)
+  )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS promotions(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT,
+    content TEXT,
+    image_url TEXT,
+    active INTEGER DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS groups(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    telegram_id INTEGER,
+    title TEXT,
+    type TEXT
+  )`);
+
+  // Пользователи Telegram
+  db.run(`CREATE TABLE IF NOT EXISTS users(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    telegram_id INTEGER UNIQUE,
+    username TEXT,
+    first_name TEXT,
+    last_name TEXT,
+    is_admin INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    last_activity DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
+
+  // Сессии корзины
+  db.run(`CREATE TABLE IF NOT EXISTS cart_items(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_telegram_id INTEGER,
+    product_id INTEGER,
+    quantity INTEGER DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(product_id) REFERENCES products(id),
+    UNIQUE(user_telegram_id, product_id)
+  )`);
+
+  // Магические категории и свойства товаров
+  db.run(`CREATE TABLE IF NOT EXISTS product_properties(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    product_id INTEGER,
+    property_name TEXT,
+    property_value TEXT,
+    FOREIGN KEY(product_id) REFERENCES products(id)
+  )`);
+
+  // Журнал административных действий
+  db.run(`CREATE TABLE IF NOT EXISTS admin_logs(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    admin_telegram_id INTEGER,
+    action TEXT,
+    target_type TEXT,
+    target_id INTEGER,
+    details TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
+});
+
+// Seed default categories once (idempotent) - Магические категории
+db.serialize(() => {
+  // Основные магические категории товаров
+  db.run("INSERT OR IGNORE INTO categories(id, name, slug, description, image_url, position) VALUES (1, '🌿 Эфирные масла', 'efirnye-masla', 'Чистые эфирные масла для ароматерапии и магических практик', '/static/products/oil-mint.jpg', 1)");
+  db.run("INSERT OR IGNORE INTO categories(id, name, slug, description, image_url, position) VALUES (2, '🌱 Травы и сборы', 'travy-sbory', 'Сушеные травы, корни и магические сборы для ритуалов', '/static/products/hydrolat-lavender.jpg', 2)");
+  db.run("INSERT OR IGNORE INTO categories(id, name, slug, description, image_url, position) VALUES (3, '🕯️ Ритуальные предметы', 'ritualnye-predmety', 'Свечи, амулеты, кристаллы и магические инструменты', '/static/icons/witch_broom.png', 3)");
+  db.run("INSERT OR IGNORE INTO categories(id, name, slug, description, image_url, position) VALUES (4, '📚 Книги и руководства', 'knigi-rukovodstva', 'Книги по магии, травничеству и эзотерике', '', 4)");
+  db.run("INSERT OR IGNORE INTO categories(id, name, slug, description, image_url, position) VALUES (5, '✨ Услуги', 'uslugi', 'Ритуалы, консультации и мастер-классы', '', 5)");
+  db.run("INSERT OR IGNORE INTO categories(id, name, slug, description, image_url, position) VALUES (6, '🧴 Натуральная косметика', 'naturalnaya-kosmetika', 'Крема, шампуни и косметика на основе трав', '/static/products/cream-rose.jpg', 6)");
+
+  // Добавляем администраторов
+  db.run("INSERT OR IGNORE INTO users(telegram_id, username, first_name, is_admin) VALUES (985246360, 'DaryaDub_07', 'Дарья', 1)");
+  db.run("INSERT OR IGNORE INTO users(telegram_id, username, first_name, is_admin) VALUES (1562870920, 'Dan_vark', 'Алексей', 1)");
+
+  // Примеры товаров для каждой категории
+  // Эфирные масла
+  db.run("INSERT OR IGNORE INTO products(id, category_id, name, description, price, stock, image_url) VALUES (1001, 1, 'Эфирное масло мяты', 'Освежающее масло мяты перечной для концентрации и ясности ума', 450, '15', '/static/products/oil-mint.jpg')");
+  db.run("INSERT OR IGNORE INTO products(id, category_id, name, description, price, stock, image_url) VALUES (1002, 1, 'Эфирное масло лаванды', 'Успокаивающее масло лаванды для релаксации и защиты', 520, '12', '')");
+  db.run("INSERT OR IGNORE INTO products(id, category_id, name, description, price, stock, image_url) VALUES (1003, 1, 'Эфирное масло кедра', 'Заземляющее масло кедра для силы и стабильности', 680, '8', '')");
+
+  // Натуральная косметика  
+  db.run("INSERT OR IGNORE INTO products(id, category_id, name, description, price, stock, image_url) VALUES (2001, 6, 'Крем с розой', 'Питательный крем для лица с экстрактом розы и магическими травами', 850, '20', '/static/products/cream-rose.jpg')");
+  db.run("INSERT OR IGNORE INTO products(id, category_id, name, description, price, stock, image_url) VALUES (2002, 6, 'Гидролат лаванды', 'Натуральный гидролат лаванды для ухода за кожей', 380, '25', '/static/products/hydrolat-lavender.jpg')");
+  db.run("INSERT OR IGNORE INTO products(id, category_id, name, description, price, stock, image_url) VALUES (2003, 6, 'Твердый шампунь с кедром', 'Натуральный твердый шампунь с эфирным маслом кедра', 420, '18', '/static/products/shampoo-cedar.jpg')");
+
+  // Услуги
+  db.run("INSERT OR IGNORE INTO products(id, category_id, name, description, price, stock, image_url) VALUES (5001, 5, 'Персональная консультация по ароматерапии', 'Индивидуальный подбор эфирных масел и составление магических смесей', 2500, 'по записи', '')");
+  db.run("INSERT OR IGNORE INTO products(id, category_id, name, description, price, stock, image_url) VALUES (5002, 5, 'Мастер-класс по травничеству', 'Обучение сбору, сушке и использованию магических трав', 3500, 'по записи', '')");
+  db.run("INSERT OR IGNORE INTO products(id, category_id, name, description, price, stock, image_url) VALUES (5003, 5, 'Ритуал очищения пространства', 'Энергетическое очищение дома или офиса травами и маслами', 4000, 'по записи', '')");
+});
+
+export default db;

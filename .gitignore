@@ -1,0 +1,31 @@
+# Пользовательские данные (не должны попадать в Code)
+data/
+uploads/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+
+# Зависимости Node.js (устанавливаются при сборке)
+node_modules/
+
+# Файлы окружения с секретными данными
+.env
+
+# Docker временные файлы
+.docker/
+
+# Логи
+*.log
+logs/
+
+# Временные файлы
+*.tmp
+*.temp
+
+# IDE файлы
+.vscode/
+.idea/
+
+# OS файлы
+.DS_Store
+Thumbs.db

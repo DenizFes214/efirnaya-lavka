@@ -1,0 +1,25 @@
+efirnaya_lavka_inspect/
+  .env.example
+  admin.html
+  amvera.yml
+  Dockerfile
+  index.html
+  package.json
+  README.md
+  backend/
+    db.js
+    seed.js
+    server.js
+    bot/
+      bot.js
+  frontend/
+    admin.html
+    index.html
+    static/
+      confetti.gif
+      drop.mp3
+      products/
+        cream-rose.jpg
+        hydrolat-lavender.jpg
+        oil-mint.jpg
+        shampoo-cedar.jpg

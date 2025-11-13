@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔮 Алтарь Чародейки — Админ</title>
+  <link rel="stylesheet" href="/static/css/tma-styles.css">
+  <style>
+    /* Дополнительные стили для админ-панели */
+    .admin-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+    
+    .admin-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      overflow-x: auto;
+      border-bottom: 2px solid var(--magical-gold);
+      padding-bottom: 0.5rem;
+    }
+    
+    .admin-tab {
+      padding: 0.8rem 1.5rem;
+      background: var(--magical-brown);
+      color: var(--magical-cream);
+      border: 2px solid var(--magical-light-green);
+      border-radius: 10px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.3s ease;
+    }
+    
+    .admin-tab.active {
+      background: var(--magical-gold);
+      color: var(--magical-dark);
+      border-color: var(--magical-gold);
+    }
+    
+    .admin-section {
+      display: none;
+    }
+    
+    .admin-section.active {
+      display: block;
+    }
+    
+    .admin-form {
+      background: var(--gradient-forest);
+      border: 2px solid var(--magical-light-green);
+      border-radius: 15px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .form-row {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    
+    .form-group {
+      flex: 1;
+      min-width: 200px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--magical-gold);
+      font-weight: bold;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.8rem;
+      border: 2px solid var(--magical-light-green);
+      border-radius: 10px;
+      background: rgba(245, 241, 232, 0.9);
+      color: var(--magical-dark);
+      font-family: inherit;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--magical-gold);
+      box-shadow: 0 0 10px var(--magical-glow);
+      outline: none;
+    }
+    
+    .admin-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+    }
+    
+    .admin-card {
+      background: var(--gradient-forest);
+      border: 2px solid var(--magical-light-green);
+      border-radius: 15px;
+      padding: 1rem;
+      transition: all 0.3s ease;
+    }
+    
+    .admin-card:hover {
+      border-color: var(--magical-gold);
+      box-shadow: 0 5px 15px var(--magical-shadow);
+    }
+    
+    .admin-card-image {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+    }
+    
+    .admin-card-title {
+      color: var(--magical-gold);
+      margin-bottom: 0.5rem;
+    }
+    
+    .admin-card-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    
+    .btn-admin {
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--magical-gold);
+      border-radius: 8px;
+      background: var(--magical-gold);
+      color: var(--magical-dark);
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-admin:hover {
+      background: transparent;
+      color: var(--magical-gold);
+    }
+    
+    .btn-admin.btn-danger {
+      border-color: #d32f2f;
+      background: #d32f2f;
+      color: white;
+    }
+    
+    .btn-admin.btn-danger:hover {
+      background: transparent;
+      color: #d32f2f;
+    }
+  </style>
+</head>
+<body>
+  
+  <!-- Заголовок админ-панели -->
+  <header class="shop-header">
+    <h1>🔮 Алтарь Чародейки</h1>
+    <p>Магическая панель управления лавкой</p>
+    <a href="/" class="btn btn-secondary">🌿 Вернуться в лавку</a>
+  </header>
+<div class="wrap">
+  <div class="tabs">
+    <div class="tab active" data-tab="products">Товары</div>
+    <div class="tab" data-tab="categories">Разделы</div>
+    <div class="tab" data-tab="reviews">Отзывы</div>
+    <div class="tab" data-tab="promotions">Акции</div>
+    <div class="tab" data-tab="orders">Заказы</div>
+  </div>
+
+  <!-- Управление товарами -->
+  <div id="productsTab" class="tab-content">
+    <div class="row">
+      <label>Раздел</label>
+      <select id="category"></select>
+      <label>Товар</label>
+      <select id="product"></select>
+      <button onclick="openCreateProduct()">Создать товар</button>
+      <button class="muted" onclick="openEditProduct()">Редактировать товар</button>
+      <button class="muted" onclick="openDeleteProduct()">Удалить товар</button>
+    </div>
+
+    <div id="productForm" class="card" style="display:none"></div>
+  </div>
+
+  <!-- Управление разделами -->
+  <div id="categoriesTab" class="tab-content" style="display:none">
+    <div class="row">
+      <button onclick="openCreateCategory()">Создать раздел</button>
+      <button class="muted" onclick="openEditCategory()">Редактировать раздел</button>
+      <button class="muted" onclick="openDeleteCategory()">Удалить раздел</button>
+    </div>
+
+    <div id="categoryForm" class="card" style="display:none"></div>
+
+    <div class="card">
+      <h3>Существующие разделы</h3>
+      <div id="categoriesList"></div>
+    </div>
+  </div>
+
+  <!-- Модерация отзывов -->
+  <div id="reviewsTab" class="tab-content" style="display:none">
+    <div class="row">
+      <label>Раздел</label>
+      <select id="reviewCategory"></select>
+      <label>Товар</label>
+      <select id="reviewProduct"></select>
+      <button onclick="loadReviews()">Просмотреть отзывы</button>
+    </div>
+
+    <div class="card">
+      <h3>Отзывы на модерации</h3>
+      <div id="reviewsList"></div>
+    </div>
+  </div>
+
+  <!-- Управление акциями -->
+  <div id="promotionsTab" class="tab-content" style="display:none">
+    <div class="row">
+      <button onclick="openCreatePromotion()">Создать акцию</button>
+    </div>
+
+    <div id="promotionForm" class="card" style="display:none"></div>
+
+    <div class="card">
+      <h3>Активные акции</h3>
+      <div id="promotionsList"></div>
+    </div>
+  </div>
+
+  <!-- Просмотр заказов -->
+  <div id="ordersTab" class="tab-content" style="display:none">
+    <div class="row">
+      <label>С:</label>
+      <input type="date" id="startDate">
+      <label>По:</label>
+      <input type="date" id="endDate">
+      <label>Статус:</label>
+      <select id="orderStatus">
+        <option value="">Все</option>
+        <option value="new">Новые</option>
+        <option value="processed">В обработке</option>
+        <option value="completed">Завершенные</option>
+      </select>
+      <button onclick="loadOrders()">Загрузить</button>
+    </div>
+
+    <div class="card">
+      <h3>История заказов</h3>
+      <div id="ordersList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let categories=[], products=[], reviews=[], promotions=[], orders=[];
+
+// Загрузка данных
+async function loadCats(){
+  categories = await (await fetch('/api/categories')).json();
+  const s = document.getElementById('category');
+  const s2 = document.getElementById('reviewCategory');
+  s.innerHTML = categories.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  s2.innerHTML = '<option value="">Все разделы</option>' + categories.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  renderCategoriesList();
+  await loadProducts();
+}
+async function loadProducts(){
+  const catId = document.getElementById('category').value;
+  products = await (await fetch('/api/admin/products?category_id='+(catId || ''))).json();
+  const p = document.getElementById('product');
+  const p2 = document.getElementById('reviewProduct');
+  p.innerHTML = '<option value="">— новый —</option>' + products.map(x=>`<option value="${x.id}">${x.name}</option>`).join('');
+  p2.innerHTML = '<option value="">Все товары</option>' + products.map(x=>`<option value="${x.id}">${x.name}</option>`).join('');
+}
+
+// Переключение вкладок
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+    
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.tab + 'Tab').style.display = 'block';
+  });
+});
+
+// Управление товарами
+function openCreateProduct(){
+  const cat = document.getElementById('category').value;
+  if (!cat) return alert('Сначала выберите раздел');
+  renderProductForm({category_id:cat});
+}
+function openEditProduct(){
+  const id = document.getElementById('product').value;
+  if(!id) return alert('Выберите товар');
+  const item = products.find(x=> x.id==id);
+  renderProductForm(item);
+}
+async function openDeleteProduct(){
+  const id = document.getElementById('product').value;
+  if(!id) return alert('Выберите товар');
+  if(!confirm('Удалить товар?')) return;
+  const r = await fetch('/api/admin/products/'+id,{method:'DELETE'});
+  if((await r.json()).deleted>=1){ alert('Удалено'); loadProducts(); }
+}
+
+function renderProductForm(item){
+  const el = document.getElementById('productForm'); el.style.display='block';
+  el.innerHTML = `
+    <h3>${item.id ? 'Редактирование' : 'Создание'} товара</h3>
+    <div class="row"><input id="name" placeholder="Название" value="${item?.name||''}" style="flex:1"></div>
+    <div class="row"><textarea id="description" placeholder="Описание" rows="4" style="flex:1">${item?.description||''}</textarea></div>
+    <div class="row">
+      <input id="price" type="number" placeholder="Цена" value="${item?.price||''}">
+      <input id="stock" placeholder="Остаток (строкой)" value="${item?.stock||''}" style="flex:1">
+    </div>
+    <div class="row">
+      <input type="file" id="productImage" accept="image/*">
+      ${item?.image_url ? `<img src="${item.image_url}" style="width:100px; height:100px; object-fit:cover; border-radius:8px">` : ''}
+    </div>
+    <div class="row">
+      <input type="file" id="productImages" accept="image/*" multiple>
+      <button class="muted" onclick="uploadProductImages(${item?.id||0})">Загрузить дополнительные фото</button>
+    </div>
+    <div class="row"><button onclick="saveProduct(${item?.id||''})">Сохранить</button></div>
+  `;
+}
+
+async function saveProduct(id){
+  const formData = new FormData();
+  formData.append('category_id', document.getElementById('category').value);
+  formData.append('name', document.getElementById('name').value);
+  formData.append('description', document.getElementById('description').value);
+  formData.append('price', document.getElementById('price').value);
+  formData.append('stock', document.getElementById('stock').value);
+  
+  if (document.getElementById('productImage').files[0]) {
+    formData.append('image', document.getElementById('productImage').files[0]);
+  }
+  
+  const method = id ? 'PUT' : 'POST';
+  const url = id ? '/api/admin/products/'+id : '/api/admin/products';
+  const r = await fetch(url, { method, body: formData });
+  const data = await r.json();
+  alert('Сохранено'); 
+  loadProducts();
+  document.getElementById('productForm').style.display = 'none';
+}
+
+async function uploadProductImages(id){
+  if(!id){ alert('Сначала сохраните товар'); return; }
+  const f = document.getElementById('productImages').files;
+  const fd = new FormData(); 
+  for(const file of f) fd.append('images', file);
+  const r = await fetch('/api/admin/products/'+id+'/images', {method:'POST', body:fd});
+  if(r.ok) alert('Фото загружены');
+}
+
+// Управление разделами
+function openCreateCategory(){
+  renderCategoryForm({});
+}
+function openEditCategory(){
+  const id = prompt('Введите ID раздела для редактирования:');
+  if(!id) return;
+  const item = categories.find(x=> x.id==id);
+  if(!item) return alert('Раздел не найден');
+  renderCategoryForm(item);
+}
+async function openDeleteCategory(){
+  const id = prompt('Введите ID раздела для удаления:');
+  if(!id) return;
+  if(!confirm('Удалить раздел?')) return;
+  const r = await fetch('/api/admin/categories/'+id,{method:'DELETE'});
+  if((await r.json()).deleted>=1){ alert('Удалено'); loadCats(); }
+}
+
+function renderCategoryForm(item){
+  const el = document.getElementById('categoryForm'); el.style.display='block';
+  el.innerHTML = `
+    <h3>${item.id ? 'Редактирование' : 'Создание'} раздела</h3>
+    <div class="row"><input id="catName" placeholder="Название" value="${item?.name||''}" style="flex:1"></div>
+    <div class="row"><textarea id="catDescription" placeholder="Описание" rows="3" style="flex:1">${item?.description||''}</textarea></div>
+    <div class="row">
+      <input id="catPosition" type="number" placeholder="Позиция" value="${item?.position||0}">
+      <input type="file" id="categoryImage" accept="image/*">
+      ${item?.image_url ? `<img src="${item.image_url}" style="width:100px; height:100px; object-fit:cover; border-radius:8px">` : ''}
+    </div>
+    <div class="row"><button onclick="saveCategory(${item?.id||''})">Сохранить</button></div>
+  `;
+}
+
+async function saveCategory(id){
+  const formData = new FormData();
+  formData.append('name', document.getElementById('catName').value);
+  formData.append('description', document.getElementById('catDescription').value);
+  formData.append('position', document.getElementById('catPosition').value);
+  
+  if (document.getElementById('categoryImage').files[0]) {
+    formData.append('image', document.getElementById('categoryImage').files[0]);
+  }
+  
+  const method = id ? 'PUT' : 'POST';
+  const url = id ? '/api/admin/categories/'+id : '/api/admin/categories';
+  const r = await fetch(url, { method, body: formData });
+  const data = await r.json();
+  alert('Сохранено'); 
+  loadCats();
+  document.getElementById('categoryForm').style.display = 'none';
+}
+
+function renderCategoriesList(){
+  const list = document.getElementById('categoriesList');
+  list.innerHTML = categories.map(cat => `
+    <div style="padding:10px; border-bottom:1px solid #eee;">
+      <strong>${cat.name}</strong> (ID: ${cat.id})
+      <div>${cat.description || ''}</div>
+    </div>
+  `).join('');
+}
+
+// Модерация отзывов
+async function loadReviews(){
+  const catId = document.getElementById('reviewCategory').value;
+  const productId = document.getElementById('reviewProduct').value;
+  let url = '/api/admin/reviews?';
+  if (catId) url += `category_id=${catId}&`;
+  if (productId) url += `product_id=${productId}`;
+  
+  reviews = await (await fetch(url)).json();
+  renderReviewsList();
+}
+
+function renderReviewsList(){
+  const list = document.getElementById('reviewsList');
+  list.innerHTML = reviews.length > 0 ? reviews.map(review => `
+    <div style="padding:10px; border-bottom:1px solid #eee; margin-bottom:10px;">
+      <div><strong>Отзыв на "${review.product_name}" от ${review.username}</strong></div>
+      <div>Рейтинг: ${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</div>
+      <div>${review.text}</div>
+      <div style="margin-top:10px;">
+        <textarea id="adminComment_${review.id}" placeholder="Комментарий магазина" style="width:100%; padding:8px; border-radius:6px; border:1px solid #ddd;">${review.admin_comment || ''}</textarea>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button class="muted" onclick="approveReview(${review.id})">Одобрить</button>
+          <button class="muted" onclick="deleteReview(${review.id})">Удалить</button>
+        </div>
+      </div>
+    </div>
+  `).join('') : '<div>Нет отзывов для модерации</div>';
+}
+
+async function approveReview(id){
+  const adminComment = document.getElementById(`adminComment_${id}`).value;
+  const r = await fetch('/api/admin/reviews/'+id+'/approve', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({admin_comment: adminComment})
+  });
+  if((await r.json()).approved>=1) {
+    alert('Отзыв одобрен');
+    loadReviews();
+  }
+}
+
+async function deleteReview(id){
+  if(!confirm('Удалить отзыв?')) return;
+  const r = await fetch('/api/admin/reviews/'+id,{method:'DELETE'});
+  if((await r.json()).deleted>=1) {
+    alert('Отзыв удален');
+    loadReviews();
+  }
+}
+
+// Управление акциями
+async function loadPromotions(){
+  promotions = await (await fetch('/api/admin/promotions')).json();
+  renderPromotionsList();
+}
+
+function openCreatePromotion(){
+  renderPromotionForm({});
+}
+
+function renderPromotionForm(item){
+  const el = document.getElementById('promotionForm'); el.style.display='block';
+  el.innerHTML = `
+    <h3>${item.id ? 'Редактирование' : 'Создание'} акции</h3>
+    <div class="row"><input id="promoTitle" placeholder="Заголовок" value="${item?.title||''}" style="flex:1"></div>
+    <div class="row"><textarea id="promoContent" placeholder="Содержание" rows="5" style="flex:1">${item?.content||''}</textarea></div>
+    <div class="row">
+      <input type="file" id="promoImage" accept="image/*">
+      ${item?.image_url ? `<img src="${item.image_url}" style="width:100px; height:100px; object-fit:cover; border-radius:8px">` : ''}
+    </div>
+    <div class="row">
+      <button onclick="savePromotion(${item?.id||''})">Сохранить</button>
+      ${item?.id ? `<button class="muted" onclick="deletePromotion(${item.id})">Удалить</button>` : ''}
+    </div>
+  `;
+}
+
+async function savePromotion(id){
+  const formData = new FormData();
+  formData.append('title', document.getElementById('promoTitle').value);
+  formData.append('content', document.getElementById('promoContent').value);
+  
+  if (document.getElementById('promoImage').files[0]) {
+    formData.append('image', document.getElementById('promoImage').files[0]);
+  }
+  
+  const method = id ? 'PUT' : 'POST';
+  const url = id ? '/api/admin/promotions/'+id : '/api/admin/promotions';
+  const r = await fetch(url, { method, body: formData });
+  const data = await r.json();
+  alert('Сохранено'); 
+  loadPromotions();
+  document.getElementById('promotionForm').style.display = 'none';
+}
+
+async function deletePromotion(id){
+  if(!confirm('Удалить акцию?')) return;
+  const r = await fetch('/api/admin/promotions/'+id,{method:'DELETE'});
+  if((await r.json()).deleted>=1) {
+    alert('Акция удалена');
+    loadPromotions();
+    document.getElementById('promotionForm').style.display = 'none';
+  }
+}
+
+function renderPromotionsList(){
+  const list = document.getElementById('promotionsList');
+  list.innerHTML = promotions.length > 0 ? promotions.map(promo => `
+    <div style="padding:10px; border-bottom:1px solid #eee; margin-bottom:10px;">
+      <div style="display:flex; justify-content:space-between;">
+        <strong>${promo.title}</strong>
+        <span>${promo.active ? '✅ Активна' : '❌ Неактивна'}</span>
+      </div>
+      <div>${promo.content}</div>
+      ${promo.image_url ? `<img src="${promo.image_url}" style="max-width:200px; max-height:200px; margin-top:10px;">` : ''}
+      <div style="margin-top:10px;">
+        <button class="muted" onclick="editPromotion(${promo.id})">Редактировать</button>
+      </div>
+    </div>
+  `).join('') : '<div>Нет активных акций</div>';
+}
+
+function editPromotion(id){
+  const promo = promotions.find(p => p.id == id);
+  renderPromotionForm(promo);
+}
+
+// Просмотр заказов
+async function loadOrders(){
+  const startDate = document.getElementById('startDate').value;
+  const endDate = document.getElementById('endDate').value;
+  const status = document.getElementById('orderStatus').value;
+  
+  let url = '/api/admin/orders?';
+  if (startDate) url += `start_date=${startDate}&`;
+  if (endDate) url += `end_date=${endDate}&`;
+  if (status) url += `status=${status}`;
+  
+  orders = await (await fetch(url)).json();
+  renderOrdersList();
+}
+
+function renderOrdersList(){
+  const list = document.getElementById('ordersList');
+  list.innerHTML = orders.length > 0 ? orders.map(order => `
+    <div style="padding:10px; border-bottom:1px solid #eee; margin-bottom:10px;">
+      <div style="display:flex; justify-content:space-between;">
+        <strong>Заказ #${order.id}</strong>
+        <span>${new Date(order.created_at).toLocaleDateString()}</span>
+      </div>
+      <div>Клиент: ${order.username}</div>
+      <div>Товары: ${order.items_list}</div>
+      <div>Сумма: ${order.total} руб.</div>
+      <div>Способ доставки: ${order.delivery_method}</div>
+      ${order.delivery_address ? `<div>Адрес: ${order.delivery_address}</div>` : ''}
+      ${order.delivery_point ? `<div>Пункт выдачи: ${order.delivery_point}</div>` : ''}
+      <div>Статус: ${order.status}</div>
+    </div>
+  `).join('') : '<div>Заказов не найдено</div>';
+}
+
+// Инициализация
+(async ()=>{ 
+  await loadCats(); 
+  await loadPromotions();
+})();
+</script>
+</body>
+</html>

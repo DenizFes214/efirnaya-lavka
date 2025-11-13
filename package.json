@@ -1,0 +1,36 @@
+{
+  "name": "efirnaya-lavka",
+  "version": "1.0.3",
+  "type": "module",
+  "description": "🌿 Эфирная Лавка - Telegram MiniApp магазин эфирных масел и магических товаров",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "node backend/server.js",
+    "build": "echo 'No build step needed for this project'",
+    "test": "echo 'No tests specified' && exit 0"
+  },
+  "dependencies": {
+    "@tma.js/init-data-node": "^2.0.3",
+    "@tma.js/sdk": "^3.0.8",
+    "better-sqlite3": "^11.3.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "multer": "^2.0.0-rc.4",
+    "node-telegram-bot-api": "^0.66.0",
+    "telegraf": "^4.16.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "telegram",
+    "miniapp",
+    "ecommerce",
+    "essential-oils",
+    "herbs",
+    "aromatherapy"
+  ],
+  "author": "Эфирная Лавка",
+  "license": "ISC"
+}
