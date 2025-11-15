@@ -1,5 +1,7 @@
 runtime: docker
-entrypoint: ["node", "backend/server.js"]
+command: node
+args:
+  - backend/server.js
 healthcheck:
   http:
     path: /api/health

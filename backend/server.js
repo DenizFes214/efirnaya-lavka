@@ -410,7 +410,9 @@ app.get('*', (req, res) => {
 });
 
 // Запуск сервера
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🌿 Эфирная Лавка запущена на порту ${PORT}`);
+const PORT = process.env.PORT || 80;
+const HOST = '0.0.0.0';
+
+app.listen(PORT, HOST, () => {
+  console.log(`🌿 Эфирная Лавка запущена на ${HOST}:${PORT}`);
 });
