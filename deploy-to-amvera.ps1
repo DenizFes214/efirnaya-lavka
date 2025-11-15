@@ -106,6 +106,7 @@ if ($repoUrl) {
         Write-Host "Ошибка: $pushResult" -ForegroundColor Red
     }
 }
+}
 
 Write-Host ""
 Write-Host "📖 Подробная документация в файле DEPLOYMENT-AMVERA.md" -ForegroundColor Cyan
