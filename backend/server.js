@@ -395,6 +395,20 @@ app.get('/api/orders', validateTelegramWebApp, (req, res) => {
   });
 });
 
+// Обработчик корневого маршрута - отдаем главную страницу
+app.get('/', (req, res) => {
+  res.sendFile(join(__dirname, '..', 'frontend', 'index.html'));
+});
+
+// Catch-all для SPA - все остальные маршруты тоже отдают index.html
+app.get('*', (req, res) => {
+  // Не перехватываем API маршруты
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
+  }
+  res.sendFile(join(__dirname, '..', 'frontend', 'index.html'));
+});
+
 // Запуск сервера
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
