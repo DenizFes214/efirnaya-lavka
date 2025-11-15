@@ -15,7 +15,7 @@ env:
   - name: PORT
     value: "80"
   - name: PUBLIC_URL
-    value: "https://amvera-aleksei57-run-efirnayalavka.amvera.io"
+    value: "https://efirnayalavka-aleksei57.amvera.io"
   - name: BOT_TOKEN
     value: "8340741653:AAGFC-nW1BnLobjhgXSKRjNY83HkU4pCqrw"
   - name: ADMIN_IDS
