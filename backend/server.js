@@ -27,6 +27,11 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Определяем путь к frontend файлам
+const frontendPath = process.env.NODE_ENV === 'production' 
+  ? join(process.cwd(), 'frontend')  // В Docker: /app/frontend
+  : join(__dirname, '..', 'frontend'); // Локально: ../frontend
+
 // Middleware для проверки Telegram WebApp данных
 const validateTelegramWebApp = (req, res, next) => {
   const initData = req.headers['x-telegram-init-data'];
@@ -112,7 +117,9 @@ const upload = multer({
 app.use('/uploads', express.static(uploadDir));
 
 // Статические файлы для фронтенда
-app.use(express.static(join(__dirname, '..', 'frontend')));
+app.use(express.static(frontendPath));
+
+console.log(`📁 Serving static files from: ${frontendPath}`);
 
 // === API: проверка админа ===
 app.get('/api/admin/check', (req, res) => {
@@ -397,7 +404,9 @@ app.get('/api/orders', validateTelegramWebApp, (req, res) => {
 
 // Обработчик корневого маршрута - отдаем главную страницу
 app.get('/', (req, res) => {
-  res.sendFile(join(__dirname, '..', 'frontend', 'index.html'));
+  const indexPath = join(frontendPath, 'index.html');
+  console.log(`📄 Serving index.html from: ${indexPath}`);
+  res.sendFile(indexPath);
 });
 
 // Catch-all для SPA - все остальные маршруты тоже отдают index.html
@@ -406,7 +415,9 @@ app.get('*', (req, res) => {
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'API endpoint not found' });
   }
-  res.sendFile(join(__dirname, '..', 'frontend', 'index.html'));
+  const indexPath = join(frontendPath, 'index.html');
+  console.log(`📄 Serving SPA fallback from: ${indexPath}`);
+  res.sendFile(indexPath);
 });
 
 // Запуск сервера
