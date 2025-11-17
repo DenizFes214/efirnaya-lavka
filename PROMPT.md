@@ -14,12 +14,26 @@
 
 ## Настройки развертывания и конфигурации
 
-### Развертывание
-- **Платформа**: AMVERA
+### Репозиторий и версионирование
+- **GitHub**: https://github.com/DenizFes214/efirnaya-lavka
+- **Owner**: DenizFes214
+- **Branch**: main
+- **License**: ISC
+- **Version**: 1.0.3
+
+### Развертывание на AMVERA
+- **Платформа**: AMVERA (https://amvera.io/)
+- **Проект**: `efirnayalavka` (пользователь: aleksei57)
+- **Runtime**: Docker
+- **Домен**: https://efirnayalavka-aleksei57.amvera.io
+- **Git репозиторий AMVERA**: https://git.msk0.amvera.ru/aleksei57/efirnayalavka
+- **Конфигурация**: amvera.yml с Docker runtime
+- **Постоянное хранилище**: /data (SQLite база, uploads)
 
 ### Telegram Bot
 - **Бот**: @efirnayalavka_bot
 - **Токен**: 8340741653:AAGFC-nW1BnLobjhgXSKRjNY83HkU4pCqrw
+- **WebApp URL**: https://efirnayalavka-aleksei57.amvera.io
 
 ### Каналы Telegram
 - **Основной канал**: @grimuar_aroma
@@ -206,14 +220,164 @@
 - Touch-friendly интерфейс
 - Оптимизация для Telegram WebApp
 
-## Технические требования
+## Технические требования и реализация
 
-- **Frontend**: HTML5, CSS3, JavaScript с @tma.js/SDK (TypeScript)
-- **Backend**: Node.js + Express + @tma.js/init-data-node для валидации
-- **База данных**: SQLite
-- **Файловое хранилище**: локальная папка uploads
-- **API**: RESTful
-- **Telegram Integration**: @tma.js/sdk v3.0.8 - современный TypeScript SDK для Telegram Mini Apps
+### Стек технологий (актуальный)
+- **Frontend**: HTML5, CSS3, Vanilla JavaScript (ES6 modules)
+- **Telegram SDK**: @tma.js/sdk v2.6.0 + @tma.js/init-data-node v2.0.3
+- **Backend**: Node.js 18+ + Express 4.21.0
+- **База данных**: SQLite (better-sqlite3 v11.3.0)
+- **Файловое хранилище**: Multer v2.0.0-rc.4 для uploads
+- **API**: RESTful с валидацией Telegram InitData
+- **Контейнеризация**: Docker с multi-stage build
+- **Веб-сервер**: Express с статической раздачей файлов
+- **CORS**: cors v2.8.5 для кроссдоменных запросов
+
+### Структура проекта (реальная)
+```
+efirnaya-lavka/
+├── 📂 backend/
+│   ├── server.js                 # Express сервер (основной файл)
+│   ├── db.js                     # SQLite database с better-sqlite3
+│   ├── seed.js                   # Инициализация тестовых данных
+│   └── telegram-miniapp.js       # Telegram Bot API интеграция
+├── 📂 frontend/
+│   ├── index.html                # Главная страница MiniApp
+│   ├── admin.html                # Админ-панель
+│   └── 📂 static/
+│       ├── 📂 css/
+│       │   └── tma-styles.css    # Магические стили
+│       ├── 📂 js/
+│       │   ├── tma-init.js       # Старая Telegram WebApp инициализация
+│       │   └── tma-init-modern.js # Новая @tma.js/sdk инициализация
+│       ├── 📂 icons/
+│       │   ├── witch_broom.png   # Иконка приложения
+│       │   └── witch_broom.svg
+│       └── 📂 products/          # Изображения товаров
+├── 📂 nginx/
+│   └── nginx.conf                # Nginx конфигурация (для docker-compose)
+├── 📄 Конфигурация деплоймента:
+├── amvera.yml                    # AMVERA конфигурация (Docker runtime)
+├── Dockerfile                    # Docker образ для production
+├── docker-compose.yml            # Локальная разработка
+├── 📄 Документация:
+├── TELEGRAM_MINIAPP_GUIDE.md     # Полное руководство по настройке
+├── DEPLOYMENT_MODERN_TMA.md      # Инструкции по деплойменту
+├── INSTALL.md                    # Инструкции по установке
+├── README.md                     # Основная документация
+└── package.json                  # Node.js зависимости
+```
+
+### Конфигурация AMVERA (amvera.yml)
+```yaml
+runtime: docker
+command: node  
+args:
+  - backend/server.js
+healthcheck:
+  http:
+    path: /api/health
+    port: 80
+    timeout: 30s
+    interval: 10s
+    retries: 3
+env:
+  - name: NODE_ENV
+    value: production
+  - name: PORT
+    value: "80"
+  - name: PUBLIC_URL
+    value: "https://efirnayalavka-aleksei57.amvera.io"
+  - name: BOT_TOKEN
+    value: "8340741653:AAGFC-nW1BnLobjhgXSKRjNY83HkU4pCqrw"
+  - name: ADMIN_IDS
+    value: "985246360,1562870920"
+  - name: MAIN_CHANNEL_ID
+    value: "-1002261187486"
+  - name: TEST_CHANNEL_ID
+    value: "-1002277761715"
+  - name: DB_PATH
+    value: "/data/efirnaya-lavka.sqlite"
+  - name: UPLOADS_PATH
+    value: "/data/uploads"
+run:
+  persistenceMount: /data
+```
+
+### Docker конфигурация
+```dockerfile
+# Используем Node.js 18 с полной glibc для better-sqlite3
+FROM node:18-bullseye-slim
+
+# Системные зависимости для компиляции native модулей
+RUN apt-get update && apt-get install -y python3 make g++
+
+WORKDIR /app
+
+# Копируем package файлы и устанавливаем зависимости
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+# Копируем весь проект
+COPY . .
+
+# Создаем необходимые директории
+RUN mkdir -p /data /data/uploads
+
+# Переменные окружения
+ENV NODE_ENV=production PORT=80
+
+EXPOSE 80
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
+  CMD curl -f http://localhost:80/api/health || exit 1
+
+# Запуск
+CMD ["node", "backend/server.js"]
+```
+
+### Актуальные зависимости (package.json)
+```json
+{
+  "name": "efirnaya-lavka",
+  "version": "1.0.3",
+  "type": "module",
+  "dependencies": {
+    "@tma.js/sdk": "^2.6.0",
+    "@tma.js/init-data-node": "^2.0.3",
+    "better-sqlite3": "^11.3.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "multer": "^2.0.0-rc.4",
+    "node-telegram-bot-api": "^0.66.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+```
+
+### Команды деплоймента
+```bash
+# Локальная разработка
+npm install
+npm run dev  # или npm start
+
+# Docker разработка  
+docker-compose up --build
+
+# Деплой на AMVERA
+git add .
+git commit -m "feat: updates"
+git push origin main     # GitHub
+git push amvera main     # AMVERA (автодеплой)
+
+# Проверка деплоймента
+curl https://efirnayalavka-aleksei57.amvera.io/api/health
+```
+
+### Telegram Integration (современная реализация)
 
 ### Возможности @tma.js/SDK для "Эфирной лавки":
 
@@ -248,20 +412,119 @@
 - **Tree-shaking support**: включение только используемых функций
 - **TypeScript**: типобезопасность для стабильной работы магазина
 
-## База данных
+## База данных (SQLite с better-sqlite3)
 
-### Таблицы:
-- `categories` - разделы товаров
-- `products` - товары и услуги
-- `orders` - заказы
-- `order_items` - позиции заказов
-- `reviews` - отзывы
-- `promotions` - акции
+### Конфигурация БД
+- **Файл**: `/data/efirnaya-lavka.sqlite` (постоянное хранилище AMVERA)
+- **Драйвер**: better-sqlite3 v11.3.0 (лучшая производительность)
+- **Синхронный API**: быстрые операции без async/await
+- **Автоинициализация**: создание таблиц при первом запуске
+- **Prepared statements**: защита от SQL-инъекций
 
-### Поля доставки в orders:
-- `delivery_method` - способ доставки
-- `delivery_address` - адрес доставки
-- `delivery_point` - пункт выдачи
+### Реализованные таблицы
+```sql
+-- Пользователи (автосоздаются при авторизации через Telegram)
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  telegram_id INTEGER UNIQUE NOT NULL,
+  username TEXT,
+  first_name TEXT,
+  last_name TEXT,
+  is_admin BOOLEAN DEFAULT 0,
+  last_activity DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Категории товаров (магические разделы)
+CREATE TABLE categories (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  description TEXT,
+  icon TEXT,
+  position INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Товары и услуги
+CREATE TABLE products (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  category_id INTEGER,
+  name TEXT NOT NULL,
+  description TEXT,
+  price DECIMAL(10,2),
+  image TEXT,
+  stock_quantity INTEGER DEFAULT 0,
+  is_available BOOLEAN DEFAULT 1,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (category_id) REFERENCES categories (id)
+);
+
+-- Заказы
+CREATE TABLE orders (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER,
+  status TEXT DEFAULT 'pending',
+  total_amount DECIMAL(10,2),
+  delivery_method TEXT,
+  delivery_address TEXT,
+  delivery_point TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users (id)
+);
+
+-- Позиции заказов
+CREATE TABLE order_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  order_id INTEGER,
+  product_id INTEGER,
+  quantity INTEGER,
+  price DECIMAL(10,2),
+  FOREIGN KEY (order_id) REFERENCES orders (id),
+  FOREIGN KEY (product_id) REFERENCES products (id)
+);
+```
+
+### Инициализация магических категорий
+```javascript
+// Автосоздание при запуске (backend/db.js)
+const categories = [
+  { name: 'Эфирные масла', description: 'Концентрированная магия растений', icon: '🌿' },
+  { name: 'Травы и сборы', description: 'Дары матушки-земли', icon: '🌱' },
+  { name: 'Ритуальные предметы', description: 'Артефакты для священных обрядов', icon: '🔮' },
+  { name: 'Книги и гримуары', description: 'Мудрость веков', icon: '📚' },
+  { name: 'Услуги', description: 'Магические консультации и ритуалы', icon: '✨' },
+  { name: 'Косметика', description: 'Красота природной магии', icon: '🧴' }
+];
+```
+
+### API endpoints для работы с БД
+```javascript
+// Основные маршруты (backend/server.js)
+GET  /api/categories              // Все категории
+GET  /api/categories/:id          // Категория по ID  
+GET  /api/categories/:id/products // Товары категории
+GET  /api/products/:id            // Товар по ID
+POST /api/orders                  // Создание заказа
+GET  /api/orders/user/:userId     // Заказы пользователя
+
+// Админские маршруты (защищенные)  
+POST /api/admin/categories        // Создание категории
+PUT  /api/admin/categories/:id    // Обновление категории
+POST /api/admin/products          // Создание товара
+PUT  /api/admin/products/:id      // Обновление товара
+POST /api/admin/upload            // Загрузка изображений
+```
+
+### Резервное копирование
+- **AMVERA**: Автоматические бэкапы постоянного хранилища `/data/`
+- **Локально**: Копирование файла `efirnaya-lavka.sqlite`
+- **Git**: База не включается в репозиторий (.gitignore)
+
+### Будущие таблицы (планируются)
+- `reviews` - отзывы клиентов
+- `promotions` - акции и скидки  
+- `inventory_log` - история изменений остатков
+- `user_favorites` - избранные товары
+- `delivery_zones` - зоны доставки с тарифами
 
 ## Рекомендации по реализации с @tma.js/sdk
 
@@ -372,7 +635,150 @@ const validateTelegramUser = (req, res, next) => {
 ```
 
 ### Файловая структура обновлений:
-- `frontend/js/telegram-integration.js` - основная интеграция с SDK
-- `frontend/js/magical-ui.js` - тематические UI элементы
-- `backend/middleware/telegram-auth.js` - валидация пользователей
-- `backend/routes/admin-magic.js` - защищенные админ роуты
+- `frontend/static/js/tma-init-modern.js` - современная интеграция с @tma.js/sdk 2.6.0
+- `frontend/static/css/tma-styles.css` - магические стили с поддержкой Telegram тем
+- `backend/server.js` - Express сервер с валидацией InitData
+- `amvera.yml` - конфигурация деплоймента AMVERA
+
+---
+
+## 🔧 Актуальная техническая информация
+
+### Архитектура приложения
+```
+┌─ Telegram Client ─┐    ┌─ AMVERA Cloud ─┐    ┌─ External Services ─┐
+│  • @tma.js/sdk     │───▶│  Express Server │◄──▶│  Telegram Bot API   │
+│  • WebApp UI       │    │  SQLite DB      │    │  Image Storage      │
+│  • Cloud Storage   │    │  Static Files   │    │  Push Notifications │
+└────────────────────┘    └─────────────────┘    └─────────────────────┘
+```
+
+### Безопасность и аутентификация
+- **Telegram InitData**: HMAC-SHA256 валидация на каждый запрос
+- **Админ права**: Проверка ID пользователя (985246360, 1562870920)
+- **CORS**: Настроен для домена efirnayalavka-aleksei57.amvera.io
+- **SQL Injection**: Prepared statements во всех запросах
+- **File Upload**: Валидация типов файлов, ограничение размера 10MB
+
+### Производительность
+- **Database**: Синхронный better-sqlite3 (быстрее async аналогов)
+- **Static Files**: Express.static с кэшированием
+- **Images**: Автоматическое сжатие при загрузке
+- **Frontend**: Vanilla JS без фреймворков (быстрая загрузка)
+- **CDN**: Статические ресурсы раздаются напрямую AMVERA
+
+### Мониторинг и отладка
+```javascript
+// Healthcheck endpoint
+GET /api/health
+Response: { "ok": true, "timestamp": "2025-11-17T06:00:00.000Z" }
+
+// Логирование
+console.log('🌿 Эфирная Лавка запущена на 0.0.0.0:80');
+console.log('🔮 База данных Эфирной Лавки инициализирована');
+console.log('📁 Serving static files from: /app/frontend');
+console.log('📄 Serving index.html from: /app/frontend/index.html');
+```
+
+### Переменные окружения (полный список)
+```bash
+# Обязательные
+NODE_ENV=production
+PORT=80
+BOT_TOKEN=8340741653:AAGFC-nW1BnLobjhgXSKRjNY83HkU4pCqrw
+ADMIN_IDS=985246360,1562870920
+PUBLIC_URL=https://efirnayalavka-aleksei57.amvera.io
+
+# Каналы
+MAIN_CHANNEL_ID=-1002261187486
+TEST_CHANNEL_ID=-1002277761715
+
+# Хранилище
+DB_PATH=/data/efirnaya-lavka.sqlite
+UPLOADS_PATH=/data/uploads
+
+# Платежи (будущее)
+YOOKASSA_SHOP_ID=test_shop_id
+YOOKASSA_SECRET_KEY=test_secret_key
+```
+
+### Статусы и коды ответов API
+```javascript
+// Успешные ответы
+200 OK - Данные получены/обновлены
+201 Created - Ресурс создан
+
+// Ошибки клиента  
+400 Bad Request - Некорректные данные
+401 Unauthorized - Отсутствует/неверная авторизация Telegram
+403 Forbidden - Нет админских прав
+404 Not Found - Ресурс не найден
+
+// Ошибки сервера
+500 Internal Server Error - Ошибка базы данных/сервера
+```
+
+### Команды разработки и деплоя
+```bash
+# Локальная разработка
+git clone https://github.com/DenizFes214/efirnaya-lavka.git
+cd efirnaya-lavka
+npm install
+npm start  # Запуск на http://localhost:80
+
+# Docker локально
+docker build -t efirnaya-lavka .
+docker run -p 80:80 -v $(pwd)/data:/data efirnaya-lavka
+
+# Тестирование API
+curl http://localhost/api/health
+curl http://localhost/api/categories
+
+# Деплой production
+git add . && git commit -m "feat: updates"
+git push origin main      # Backup на GitHub
+git push amvera main      # Деплой на AMVERA
+
+# Проверка production
+curl https://efirnayalavka-aleksei57.amvera.io/api/health
+curl https://efirnayalavka-aleksei57.amvera.io/api/categories
+```
+
+### Логи и диагностика AMVERA
+- **Логи сборки**: Доступны в панели AMVERA во вкладке "Логи"
+- **Логи приложения**: Real-time в панели управления
+- **Мониторинг**: Автоматические алерты при сбоях
+- **Метрики**: CPU, Memory, HTTP requests в дашборде
+
+### Интеграция с Telegram Bot
+```javascript
+// Настройка WebApp кнопки
+/setmenubutton
+@efirnayalavka_bot
+text: 🛒 Открыть магазин  
+url: https://efirnayalavka-aleksei57.amvera.io
+
+// Команды бота
+/start - 🌟 Открыть Эфирную Лавку
+/catalog - 📋 Каталог товаров
+/help - ❓ Помощь и контакты
+```
+
+### Roadmap технических улучшений
+- [ ] **Платежи**: Интеграция YooKassa/Stripe
+- [ ] **Push-уведомления**: Telegram Bot notifications
+- [ ] **Аналитика**: Сбор метрик использования
+- [ ] **Кэширование**: Redis для сессий и корзины
+- [ ] **CDN**: Оптимизация загрузки изображений
+- [ ] **PWA**: Service Worker для офлайн режима
+- [ ] **A/B тесты**: Оптимизация конверсии
+- [ ] **Мультиязычность**: i18n поддержка
+
+---
+
+**🌿 Проект готов к масштабированию и коммерческому использованию! ✨**
+
+### Контакты технической поддержки
+- **GitHub Issues**: https://github.com/DenizFes214/efirnaya-lavka/issues
+- **AMVERA Support**: https://docs.amvera.io/
+- **Telegram**: @DaryaDub_07, @Dan_vark
