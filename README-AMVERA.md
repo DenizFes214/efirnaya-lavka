@@ -98,7 +98,7 @@ BOT_TOKEN=8340741653:AAGFC-nW1BnLobjhgXSKRjNY83HkU4pCqrw
 ADMIN_IDS=985246360,1562870920
 MAIN_CHANNEL_ID=-1002261187486
 TEST_CHANNEL_ID=-1002277761715
-PUBLIC_URL=https://your-app-name.amvera.io
+PUBLIC_URL=https://efirnayalavka-aleksei57.amvera.io
 ```
 
 ### Docker Optimizations
@@ -196,9 +196,9 @@ curl http://localhost/api/categories
 ## 🌍 Production URLs
 
 After deployment your app will be available at:
-- **Main App:** `https://your-app-name.amvera.io`
-- **Health Check:** `https://your-app-name.amvera.io/api/health`
-- **Admin Panel:** `https://your-app-name.amvera.io/admin.html`
+- **Main App:** `https://efirnayalavka-aleksei57.amvera.io`
+- **Health Check:** `https://efirnayalavka-aleksei57.amvera.io/api/health`
+- **Admin Panel:** `https://efirnayalavka-aleksei57.amvera.io/admin.html`
 
 ## 🤝 Contributing
 

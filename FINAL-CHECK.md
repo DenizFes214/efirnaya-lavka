@@ -3,13 +3,13 @@
 ## ✅ Настройки завершены!
 
 ### 🌐 URL приложения:
-https://amvera-aleksei57-run-efirnayalavka.amvera.io
+https://efirnayalavka-aleksei57.amvera.io
 
 ### 🤖 Telegram Bot настройка:
 1. Откройте @BotFather: https://t.me/BotFather
 2. Команда: /setmenubutton
 3. Button text: 🌿 Эфирная Лавка  
-4. Web App URL: https://amvera-aleksei57-run-efirnayalavka.amvera.io
+4. Web App URL: https://efirnayalavka-aleksei57.amvera.io
 
 ### 📱 Как открыть приложение:
 1. Найдите вашего бота в Telegram
@@ -18,9 +18,9 @@ https://amvera-aleksei57-run-efirnayalavka.amvera.io
 4. WebApp откроется внутри Telegram
 
 ### 🔧 Проверьте endpoints:
-- Health: https://amvera-aleksei57-run-efirnayalavka.amvera.io/api/health
-- Categories: https://amvera-aleksei57-run-efirnayalavka.amvera.io/api/categories
-- Main App: https://amvera-aleksei57-run-efirnayalavka.amvera.io
+- Health: https://efirnayalavka-aleksei57.amvera.io/api/health
+- Categories: https://efirnayalavka-aleksei57.amvera.io/api/categories
+- Main App: https://efirnayalavka-aleksei57.amvera.io
 
 ### 👑 Админ доступ:
 Пользователи с ID 985246360 и 1562870920 получат админские права

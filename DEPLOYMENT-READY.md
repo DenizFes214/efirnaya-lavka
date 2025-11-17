@@ -1,6 +1,14 @@
 # ✅ ГОТОВНОСТЬ К РАЗВЕРТЫВАНИЮ НА AMVERA
 
-## 🎯 СТАТУС: ГОТОВ К РАЗВЕРТЫВАНИЮ ✅
+## 🎯 СТАТУС: ГОТОВ К 3. **Настроить webhook бота** (после получения URL):
+   ```bash
+   curl -X POST "https://api.telegram.org/bot8340741653:AAGFC-nW1BnLobjhgXSKRjNY83HkU4pCqrw/setWebhook" \
+        -H "Content-Type: application/json" \
+        -d '{"url": "https://efirnayalavka-aleksei57.amvera.io/telegram/webhook"}'
+   ```
+
+6. **Проверьте работу**:
+   - Health check: `https://efirnayalavka-aleksei57.amvera.io/api/health`АНИЮ ✅
 
 ### ✅ Исправленные проблемы:
 
@@ -72,7 +80,7 @@
    ```
 
 4. **Протестировать**:
-   - Health check: `https://efirnayalavka.amvera.io/api/health`
+   - Health check: `https://efirnayalavka-aleksei57.amvera.io/api/health`
    - Telegram бот: отправить `/start` @efirnayalavka_bot
    - WebApp: открыть приложение из бота
 

@@ -11,7 +11,7 @@
 2. Настройте WebApp URL в боте:
    ```
    /setmenubutton
-   https://efirnayalavka.amvera.io
+   https://efirnayalavka-aleksei57.amvera.io
    ```
 
 ### 2. Каналы для уведомлений
@@ -43,7 +43,7 @@ env:
   - name: PORT
     value: "80"
   - name: PUBLIC_URL
-    value: "https://efirnayalavka.amvera.io"
+    value: "https://efirnayalavka-aleksei57.amvera.io"
   - name: BOT_TOKEN
     value: "8340741653:AAGFC-nW1BnLobjhgXSKRjNY83HkU4pCqrw"
   - name: ADMIN_IDS
@@ -65,14 +65,14 @@ env:
 
 ### 4. Настройка домена
 
-1. После развертывания получите URL вида `https://your-app.amvera.io`
+1. После развертывания получите URL вида `https://efirnayalavka-aleksei57.amvera.io`
 2. Обновите переменную `PUBLIC_URL` в настройках проекта
 3. Настройте webhook для бота:
 
 ```bash
 curl -X POST "https://api.telegram.org/bot8340741653:AAGFC-nW1BnLobjhgXSKRjNY83HkU4pCqrw/setWebhook" \
      -H "Content-Type: application/json" \
-     -d '{"url": "https://efirnayalavka.amvera.io/telegram/webhook"}'
+     -d '{"url": "https://efirnayalavka-aleksei57.amvera.io/telegram/webhook"}'
 ```
 
 ### 5. Настройка бота

@@ -4,7 +4,7 @@ dotenv.config();
 
 // Конфигурация бота Эфирной Лавки
 const BOT_TOKEN = process.env.BOT_TOKEN || '8340741653:AAGFC-nW1BnLobjhgXSKRjNY83HkU4pCqrw';
-const PUBLIC_URL = process.env.PUBLIC_URL || 'https://your-domain.amvera.io';
+const PUBLIC_URL = process.env.PUBLIC_URL || 'https://efirnayalavka-aleksei57.amvera.io';
 
 // Создаём экземпляр бота
 const bot = new Telegraf(BOT_TOKEN);
