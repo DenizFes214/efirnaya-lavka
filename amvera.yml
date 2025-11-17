@@ -1,14 +1,15 @@
-runtime: docker
-command: node
-args:
-  - backend/server.js
-healthcheck:
-  http:
-    path: /api/health
-    port: 80
-    timeout: 30s
-    interval: 10s
-    retries: 3
+meta:
+  environment: docker
+  toolchain:
+    name: docker
+
+build:
+  # Dockerfile будет найден автоматически
+
+run:
+  containerPort: 80
+  persistenceMount: /data
+
 env:
   - name: NODE_ENV
     value: production
@@ -32,5 +33,3 @@ env:
     value: "test_shop_id"
   - name: YOOKASSA_SECRET_KEY
     value: "test_secret_key"
-run:
-  persistenceMount: /data
