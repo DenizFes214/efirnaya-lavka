@@ -1,35 +1,14 @@
 meta:
   environment: docker
   toolchain:
-    name: docker
+    name: ""
+    version: ""
 
 build:
-  # Dockerfile будет найден автоматически
+  dockerfile:
+    path: Dockerfile
 
 run:
   containerPort: 80
+  servicePort: 80
   persistenceMount: /data
-
-env:
-  - name: NODE_ENV
-    value: production
-  - name: PORT
-    value: "80"
-  - name: PUBLIC_URL
-    value: "https://efirnayalavka-aleksei57.amvera.io"
-  - name: BOT_TOKEN
-    value: "8340741653:AAGFC-nW1BnLobjhgXSKRjNY83HkU4pCqrw"
-  - name: ADMIN_IDS
-    value: "985246360,1562870920"
-  - name: MAIN_CHANNEL_ID
-    value: "-1002261187486"
-  - name: TEST_CHANNEL_ID
-    value: "-1002277761715"
-  - name: DB_PATH
-    value: "/data/efirnaya-lavka.sqlite"
-  - name: UPLOADS_PATH
-    value: "/data/uploads"
-  - name: YOOKASSA_SHOP_ID
-    value: "test_shop_id"
-  - name: YOOKASSA_SECRET_KEY
-    value: "test_secret_key"
