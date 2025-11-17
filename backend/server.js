@@ -13,275 +13,99 @@ const __dirname = dirname(__filename);
 
 // Конфигурация Telegram бота
 const BOT_TOKEN = process.env.BOT_TOKEN || '8340741653:AAGFC-nW1BnLobjhgXSKRjNY83HkU4pCqrw';
-const ADMIN_IDS = ['985246360', '1562870920']; // Дарья и Алексей
-const MAIN_CHANNEL_ID = '-1002261187486'; // Гримуар Ароматерапии
-const TEST_CHANNEL_ID = '-1002277761715'; // Тестовый канал
+const ADMIN_IDS = ['985246360', '1562870920'];
+const MAIN_CHANNEL_ID = '-1002261187486';
+const TEST_CHANNEL_ID = '-1002277761715';
 
 // Инициализация бота
 const bot = new TelegramBot(BOT_TOKEN, { polling: false });
 
 const app = express();
 app.use(cors());
-
-// Добавляем middleware для парсинга JSON
 app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use('/uploads', express.static(join(__dirname, '../uploads')));
+app.use(express.static(join(__dirname, '../frontend')));
 
-// Определяем путь к frontend файлам
-const frontendPath = process.env.NODE_ENV === 'production' 
-  ? join(process.cwd(), 'frontend')  // В Docker: /app/frontend
-  : join(__dirname, '..', 'frontend'); // Локально: ../frontend
-
-// Middleware для проверки Telegram WebApp данных
-const validateTelegramWebApp = (req, res, next) => {
-  const initData = req.headers['x-telegram-init-data'];
+// Валидация Telegram Web App
+function validateTelegramWebApp(req, res, next) {
+  const initData = req.headers.authorization;
   
   if (!initData) {
-    return res.status(401).json({ error: 'Missing Telegram init data' });
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   try {
-    // Парсим init data из Telegram WebApp
-    const urlParams = new URLSearchParams(initData);
+    const urlParams = new URLSearchParams(initData.replace('tma ', ''));
     const hash = urlParams.get('hash');
+    const authDate = urlParams.get('auth_date');
+    
     urlParams.delete('hash');
     
-    // Сортируем параметры и создаем строку для проверки
+    if (Math.abs(Date.now() / 1000 - parseInt(authDate)) > 86400) {
+      return res.status(401).json({ error: 'Auth data expired' });
+    }
+
     const dataCheckString = Array.from(urlParams.entries())
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([key, value]) => `${key}=${value}`)
       .join('\n');
-    
-    // Создаем ключ для проверки подписи
+
     const secretKey = crypto.createHmac('sha256', 'WebAppData').update(BOT_TOKEN).digest();
     const calculatedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
-    
+
     if (calculatedHash !== hash) {
-      return res.status(401).json({ error: 'Invalid Telegram data' });
+      return res.status(401).json({ error: 'Invalid hash' });
     }
 
-    // Парсим данные пользователя
-    const user = JSON.parse(urlParams.get('user') || '{}');
-    req.telegramUser = user;
+    const userParam = urlParams.get('user');
+    if (userParam) {
+      req.telegramUser = JSON.parse(decodeURIComponent(userParam));
+    }
     
     next();
   } catch (error) {
-    return res.status(401).json({ error: 'Invalid init data format' });
+    console.error('Auth validation error:', error);
+    return res.status(401).json({ error: 'Invalid auth data' });
   }
-};
+}
 
-// Middleware для проверки админских прав
-const requireAdmin = (req, res, next) => {
-  if (!req.telegramUser || !ADMIN_IDS.includes(req.telegramUser.id.toString())) {
-    return res.status(403).json({ error: 'Admin access required' });
-  }
-  next();
-};
-
-// === Healthcheck ===
-app.get('/api/health', (_req, res) => res.json({ ok: true }));
-
-// === Настройка Multer для загрузки файлов ===
-const uploadDir = process.env.UPLOADS_PATH || '/data/uploads';
-
-// Создаем директорию для загрузок
-const initUploadDir = async () => {
-  try {
-    // Создаем /data если не существует
-    await mkdir('/data', { recursive: true });
-    // Создаем /data/uploads если не существует
-    await mkdir(uploadDir, { recursive: true });
-  } catch (error) {
-    console.log('Директории уже существуют или созданы');
-  }
-};
-initUploadDir();
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + extname(file.originalname));
-  }
+// Базовые маршруты
+app.get('/', (req, res) => {
+  res.sendFile(join(__dirname, '../frontend/index.html'));
 });
 
-const upload = multer({ 
-  storage: storage,
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
-  }
+app.get('/admin', (req, res) => {
+  res.sendFile(join(__dirname, '../frontend/admin.html'));
 });
 
-app.use('/uploads', express.static(uploadDir));
-
-// Статические файлы для фронтенда
-app.use(express.static(frontendPath));
-
-console.log(`📁 Serving static files from: ${frontendPath}`);
-
-// === API: проверка админа ===
-app.get('/api/admin/check', (req, res) => {
-  const userId = req.query.user_id;
-  res.json({ isAdmin: ADMIN_IDS.includes(userId.toString()) });
-});
-
-// === API: аутентификация пользователя ===
-app.post('/api/auth/telegram', validateTelegramWebApp, (req, res) => {
-  const user = req.telegramUser;
-  
-  // Сохраняем или обновляем пользователя в БД
-  db.run(`
-    INSERT OR REPLACE INTO users (telegram_id, username, first_name, last_name, is_admin, last_activity) 
-    VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-  `, [
-    user.id, 
-    user.username || '', 
-    user.first_name || '', 
-    user.last_name || '', 
-    ADMIN_IDS.includes(user.id.toString()) ? 1 : 0
-  ], function(err) {
-    if (err) {
-      return res.status(500).json({ error: 'Database error' });
-    }
-    
-    res.json({ 
-      success: true, 
-      user: {
-        id: user.id,
-        username: user.username,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        is_admin: ADMIN_IDS.includes(user.id.toString())
-      }
-    });
-  });
-});
-
-// === API: категории ===
-app.get('/api/categories', (_req, res) => {
-  db.all('SELECT * FROM categories ORDER BY position, name', (e, rows) => {
-    if (e) {
-      console.error('Error fetching categories:', e);
-      return res.status(500).json({ error: e.message });
-    }
-    res.json(rows || []);
-  });
-});
-
-app.get('/api/categories/:id', (req, res) => {
-  const id = req.params.id;
-  db.get('SELECT * FROM categories WHERE id = ?', [id], (err, row) => {
-    if (err) {
-      console.error('Error fetching category:', err);
-      return res.status(500).json({ error: err.message });
-    }
-    if (!row) {
-      return res.status(404).json({ error: 'Category not found' });
-    }
-    res.json(row);
-  });
-});
-
-app.get('/api/categories/:id/products', (req, res) => {
-  const categoryId = req.params.id;
-  db.all('SELECT * FROM products WHERE category_id = ? ORDER BY name', [categoryId], (err, rows) => {
-    if (err) {
-      console.error('Error fetching products by category:', err);
-      return res.status(500).json({ error: err.message });
-    }
-    res.json(rows || []);
-  });
-});
-
-// === API: товары ===
+// API товаров
 app.get('/api/products', (req, res) => {
-  const catId = req.query.category_id;
-  const sql = catId
-    ? 'SELECT * FROM products WHERE category_id=? ORDER BY name'
-    : 'SELECT * FROM products ORDER BY name';
-  const args = catId ? [catId] : [];
-  
-  db.all(sql, args, (e, rows) => {
-    if (e) {
-      console.error('Error fetching products:', e);
-      return res.status(500).json({ error: e.message });
+  db.all("SELECT * FROM products ORDER BY id DESC", [], (err, rows) => {
+    if (err) {
+      console.error('Error fetching products:', err);
+      return res.status(500).json({ error: err.message });
     }
     res.json(rows || []);
   });
 });
 
 app.get('/api/products/:id', (req, res) => {
-  const id = req.params.id;
-  db.get('SELECT * FROM products WHERE id = ?', [id], (err, row) => {
+  const productId = req.params.id;
+  db.get("SELECT * FROM products WHERE id = ?", [productId], (err, row) => {
     if (err) {
       console.error('Error fetching product:', err);
       return res.status(500).json({ error: err.message });
     }
+    
     if (!row) {
-      return res.status(404).json({ error: 'Product not found' });
+      return res.status(404).json({ error: 'Товар не найден' });
     }
+    
     res.json(row);
   });
 });
 
-// === API: корзина ===
-app.get('/api/cart', validateTelegramWebApp, (req, res) => {
-  const userId = req.telegramUser.id;
-  
-  db.all(`
-    SELECT ci.*, p.name, p.price, p.image_url 
-    FROM cart_items ci 
-    JOIN products p ON ci.product_id = p.id 
-    WHERE ci.user_telegram_id = ?
-  `, [userId], (err, rows) => {
-    if (err) {
-      console.error('Error fetching cart:', err);
-      return res.status(500).json({ error: err.message });
-    }
-    res.json(rows || []);
-  });
-});
-
-app.post('/api/cart', validateTelegramWebApp, (req, res) => {
-  const userId = req.telegramUser.id;
-  const { product_id, quantity = 1 } = req.body;
-  
-  if (!product_id) {
-    return res.status(400).json({ error: 'Product ID is required' });
-  }
-  
-  db.run(`
-    INSERT OR REPLACE INTO cart_items (user_telegram_id, product_id, quantity) 
-    VALUES (?, ?, COALESCE((SELECT quantity FROM cart_items WHERE user_telegram_id = ? AND product_id = ?), 0) + ?)
-  `, [userId, product_id, userId, product_id, quantity], function(err) {
-    if (err) {
-      console.error('Error adding to cart:', err);
-      return res.status(500).json({ error: err.message });
-    }
-    res.json({ success: true });
-  });
-});
-
-app.delete('/api/cart/:productId', validateTelegramWebApp, (req, res) => {
-  const userId = req.telegramUser.id;
-  const productId = req.params.productId;
-  
-  db.run(
-    'DELETE FROM cart_items WHERE user_telegram_id = ? AND product_id = ?',
-    [userId, productId],
-    function(err) {
-      if (err) {
-        console.error('Error removing from cart:', err);
-        return res.status(500).json({ error: err.message });
-      }
-      res.json({ success: true, deleted: this.changes });
-    }
-  );
-});
-
-// === API: заказы ===
+// API заказов
 app.post('/api/orders', validateTelegramWebApp, (req, res) => {
   try {
     const user = req.telegramUser;
@@ -291,7 +115,6 @@ app.post('/api/orders', validateTelegramWebApp, (req, res) => {
       return res.status(400).json({ error: 'Корзина пуста' });
     }
 
-    // Вычисляем общую стоимость
     const productIds = items.map(item => item.id);
     const placeholders = productIds.map(() => '?').join(',');
     
@@ -334,35 +157,50 @@ app.post('/api/orders', validateTelegramWebApp, (req, res) => {
           
           const orderId = this.lastID;
           
-          // Сохраняем товары в заказе
           const stmt = db.prepare('INSERT INTO order_items(order_id, product_id, name, price, qty) VALUES(?,?,?,?,?)');
           
-          validItems.forEach(item => {
-            stmt.run([orderId, item.id, item.name, item.price, item.quantity]);
-          });
-          
-          stmt.finalize((err) => {
-            if (err) {
-              console.error('Error saving order items:', err);
-              return res.status(500).json({ error: err.message });
-            }
+          try {
+            validItems.forEach(item => {
+              stmt.run(orderId, item.id, item.name, item.price, item.quantity);
+            });
+            stmt.finalize();
             
-            // Очищаем корзину пользователя
             db.run('DELETE FROM cart_items WHERE user_telegram_id = ?', [user.id]);
             
-            // Отправляем уведомление админам
+            // Отправка уведомлений согласно PROMPT.md
             try {
-              const itemsList = validItems.map(i => `${i.name} (x${i.quantity})`).join(', ');
-              const message = `🛒 Новый заказ №${orderId}
-              
-👤 Заказчик: ${user.first_name} ${user.last_name || ''} (@${user.username || 'без username'})
-📦 Товары: ${itemsList}
-💰 Сумма: ${total}₽
-📝 Комментарий: ${comment || 'нет'}
-🚚 Доставка: ${delivery_method === 'pickup' ? 'Самовывоз' : 'Доставка'}
-${delivery_address ? `📍 Адрес: ${delivery_address}` : ''}`;
+              const deliveryText = delivery_method === 'pickup' ? 'Самовывоз' : 
+                                 delivery_method === 'post' ? 'Почта России' :
+                                 delivery_method === 'yandex' ? 'Яндекс доставка' : 'Доставка';
 
-              bot.sendMessage(TEST_CHANNEL_ID, message);
+              const adminMessage = `🔮 Великая Мастерица! 🌟
+Поступил заказ от ${user.first_name} ${user.last_name || ''} (@${user.username || 'безымянный_странник'}):
+
+✨ ЗАКАЗАННЫЕ ЗЕЛЬЯ:
+${validItems.map(i => `• ${i.name} - ${i.quantity} шт. по ${i.price}₽`).join('\n')}
+
+💰 Общая сумма: ${total}₽
+🧙‍♀️ Время заказа: ${new Date().toLocaleString('ru-RU')}
+📦 Способ получения: ${deliveryText}
+${delivery_address ? `📍 Адрес доставки: ${delivery_address}` : ''}
+${comment ? `💭 Пожелания путника: ${comment}` : ''}`;
+
+              bot.sendMessage('985246360', adminMessage);
+              
+              const userMessage = `🌟 Благодарим за доверие к Эфирной Лавке! 🌟
+
+Ваш заказ №${orderId} принят в работу:
+${validItems.map(i => `• ${i.name} - ${i.quantity} шт.`).join('\n')}
+
+💰 К оплате: ${total}₽
+
+🔮 Скоро мы свяжемся с вами для уточнения деталей!
+✨ Пусть ароматы приносят вам магию каждый день!`;
+
+              bot.sendMessage(user.id, userMessage);
+
+              bot.sendMessage(TEST_CHANNEL_ID, `📊 Заказ №${orderId} оформлен\nПользователь: ${user.first_name}\nТоваров: ${validItems.length}\nСумма: ${total}₽`);
+              
             } catch (notificationError) {
               console.error('Error sending notification:', notificationError);
             }
@@ -372,7 +210,10 @@ ${delivery_address ? `📍 Адрес: ${delivery_address}` : ''}`;
               id: orderId,
               total: total 
             });
-          });
+          } catch (stmtError) {
+            console.error('Error saving order items:', stmtError);
+            return res.status(500).json({ error: 'Ошибка сохранения заказа' });
+          }
         }
       );
     });
@@ -382,7 +223,6 @@ ${delivery_address ? `📍 Адрес: ${delivery_address}` : ''}`;
   }
 });
 
-// Получение заказов пользователя
 app.get('/api/orders', validateTelegramWebApp, (req, res) => {
   const userId = req.telegramUser.id;
   
@@ -402,28 +242,10 @@ app.get('/api/orders', validateTelegramWebApp, (req, res) => {
   });
 });
 
-// Обработчик корневого маршрута - отдаем главную страницу
-app.get('/', (req, res) => {
-  const indexPath = join(frontendPath, 'index.html');
-  console.log(`📄 Serving index.html from: ${indexPath}`);
-  res.sendFile(indexPath);
-});
-
-// Catch-all для SPA - все остальные маршруты тоже отдают index.html
-app.get('*', (req, res) => {
-  // Не перехватываем API маршруты
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ error: 'API endpoint not found' });
-  }
-  const indexPath = join(frontendPath, 'index.html');
-  console.log(`📄 Serving SPA fallback from: ${indexPath}`);
-  res.sendFile(indexPath);
-});
-
 // Запуск сервера
-const PORT = process.env.PORT || 80;
-const HOST = '0.0.0.0';
-
-app.listen(PORT, HOST, () => {
-  console.log(`🌿 Эфирная Лавка запущена на ${HOST}:${PORT}`);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🌿 Эфирная Лавка запущена на порту ${PORT}`);
 });
+
+export default app;

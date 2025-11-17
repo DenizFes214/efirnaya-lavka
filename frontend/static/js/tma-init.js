@@ -250,6 +250,9 @@ class TelegramWebAppIntegration {
   }
 }
 
+// Экспортируем класс в глобальную область видимости
+window.TelegramWebAppIntegration = TelegramWebAppIntegration;
+
 // Создаем глобальный экземпляр
 window.telegramApp = new TelegramWebAppIntegration();
 

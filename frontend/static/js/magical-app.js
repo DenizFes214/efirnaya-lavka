@@ -12,9 +12,11 @@ class EtherealShop {
   }
 
   async init() {
+    console.log('🔮 EtherealShop init started');
     try {
       // Ждем инициализации Telegram WebApp
       if (window.telegramApp) {
+        console.log('📱 Telegram WebApp found, waiting for initialization');
         await new Promise(resolve => {
           if (window.telegramApp.isInitialized) {
             resolve();
@@ -68,11 +70,6 @@ class EtherealShop {
       if (response.ok) {
         this.user = await response.json();
         
-        // Показываем админ кнопку для администраторов
-        if (this.user.user?.is_admin) {
-          document.getElementById('adminButton').style.display = 'block';
-        }
-        
         // Приветственная вибрация
         window.telegramApp.hapticFeedback('light');
         
@@ -84,24 +81,33 @@ class EtherealShop {
   }
 
   async loadCategories() {
+    console.log('📋 Loading categories...');
     try {
       const response = await fetch('/api/categories');
+      console.log('📡 Categories response:', response.status);
       const categories = await response.json();
+      console.log('🏷️ Categories data:', categories);
       
       this.renderCategories(categories);
     } catch (error) {
-      console.error('Ошибка загрузки категорий:', error);
+      console.error('❌ Ошибка загрузки категорий:', error);
     }
   }
 
   renderCategories(categories) {
+    console.log('🎨 Rendering categories:', categories.length);
     const grid = document.getElementById('categoriesGrid');
+    if (!grid) {
+      console.error('❌ categoriesGrid element not found!');
+      return;
+    }
     grid.innerHTML = '';
 
     categories.forEach(category => {
       const categoryElement = this.createCategoryCard(category);
       grid.appendChild(categoryElement);
     });
+    console.log('✅ Categories rendered successfully');
   }
 
   createCategoryCard(category) {
@@ -213,11 +219,13 @@ class EtherealShop {
     const imageSrc = product.image_url || '/static/icons/witch_broom.png';
     
     container.innerHTML = `
+      <div class="screen-header">
+        <button class="btn-back" onclick="etherealShop.showScreen('catalog')">← Назад</button>
+        <h2>${product.name}</h2>
+      </div>
       <div class="product-detail">
         <img src="${imageSrc}" alt="${product.name}" class="product-detail-image"
              onerror="this.src='/static/icons/witch_broom.png'">
-        
-        <h2>${product.name}</h2>
         
         <div class="product-price-large">${product.price}₽</div>
         
@@ -233,9 +241,6 @@ class EtherealShop {
         <div class="product-actions">
           <button class="btn" onclick="etherealShop.addToCart(${product.id})">
             🛒 Добавить в корзину
-          </button>
-          <button class="btn btn-secondary" onclick="etherealShop.showScreen('catalog')">
-            ← Назад к каталогу
           </button>
         </div>
       </div>
@@ -397,8 +402,16 @@ class EtherealShop {
         this.saveCart();
         this.updateCartCount();
         
-        this.showNotification('✨ Заказ успешно оформлен!');
-        this.showScreen('orders');
+        this.showNotification('✨ Заказ успешно оформлен! Переходим в чат с мастером...');
+        
+        // Открываем чат с @DaryaDub_07
+        if (Telegram.WebApp) {
+          // Используем Telegram Web App API для открытия чата
+          Telegram.WebApp.openTelegramLink('https://t.me/DaryaDub_07');
+        } else {
+          // Если Web App API недоступен, открываем в браузере
+          window.open('https://t.me/DaryaDub_07', '_blank');
+        }
       } else {
         throw new Error('Ошибка оформления заказа');
       }
@@ -410,8 +423,9 @@ class EtherealShop {
   }
 
   showScreen(screenName) {
+    console.log('📺 Switching to screen:', screenName);
     // Скрываем все экраны
-    const screens = ['loadingScreen', 'homeScreen', 'catalogScreen', 'productScreen', 'cartScreen', 'ordersScreen'];
+    const screens = ['loadingScreen', 'homeScreen', 'catalogScreen', 'productScreen', 'cartScreen', 'ordersScreen', 'profileScreen'];
     screens.forEach(screen => {
       const element = document.getElementById(screen);
       if (element) element.style.display = 'none';
@@ -456,6 +470,15 @@ class EtherealShop {
         targetScreen = 'ordersScreen';
         document.getElementById('nav-orders')?.classList.add('active');
         this.loadOrders();
+        if (window.telegramApp) {
+          window.telegramApp.hideMainButton();
+          window.telegramApp.showBackButton();
+        }
+        break;
+      case 'profile':
+        targetScreen = 'profileScreen';
+        document.getElementById('nav-profile')?.classList.add('active');
+        this.loadProfile();
         if (window.telegramApp) {
           window.telegramApp.hideMainButton();
           window.telegramApp.showBackButton();
@@ -554,7 +577,89 @@ class EtherealShop {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
   }
+
+  loadProfile() {
+    try {
+      const userInfoContainer = document.getElementById('userInfo');
+      
+      // Отображение информации о пользователе
+      if (this.user && this.user.user) {
+        const user = this.user.user;
+        userInfoContainer.innerHTML = `
+          <div class="user-card">
+            <div class="user-avatar">
+              ${user.first_name?.charAt(0) || '👤'}
+            </div>
+            <div class="user-details">
+              <h4>${user.first_name || 'Путник'} ${user.last_name || ''}</h4>
+              <p class="user-username">@${user.username || 'неизвестный_странник'}</p>
+              <p class="user-id">ID: ${user.id}</p>
+            </div>
+          </div>
+        `;
+      } else {
+        userInfoContainer.innerHTML = `
+          <div class="user-card">
+            <div class="user-avatar">👤</div>
+            <div class="user-details">
+              <h4>Неизвестный Путник</h4>
+              <p class="user-note">Информация о пользователе недоступна</p>
+            </div>
+          </div>
+        `;
+      }
+
+      // Загрузка настроек из localStorage
+      const hideDeliveryFields = localStorage.getItem('hideDeliveryFields') === 'true';
+      const saveLastCategory = localStorage.getItem('saveLastCategory') === 'true';
+      
+      document.getElementById('hideDeliveryFields').checked = hideDeliveryFields;
+      document.getElementById('saveLastCategory').checked = saveLastCategory;
+
+      // Обработчики изменения настроек
+      document.getElementById('hideDeliveryFields').addEventListener('change', (e) => {
+        localStorage.setItem('hideDeliveryFields', e.target.checked);
+        this.showNotification(e.target.checked ? '⚙️ Поля доставки будут скрыты' : '⚙️ Поля доставки будут показаны');
+      });
+
+      document.getElementById('saveLastCategory').addEventListener('change', (e) => {
+        localStorage.setItem('saveLastCategory', e.target.checked);
+        this.showNotification(e.target.checked ? '⚙️ Категория будет запоминаться' : '⚙️ Категория не будет запоминаться');
+      });
+
+      // Загрузка недавно просмотренных товаров
+      this.loadRecentViewed();
+      
+    } catch (error) {
+      console.error('Ошибка загрузки профиля:', error);
+    }
+  }
+
+  loadRecentViewed() {
+    const recentContainer = document.getElementById('recentViewed');
+    const recentItems = JSON.parse(localStorage.getItem('recentViewed') || '[]');
+    
+    if (recentItems.length === 0) {
+      recentContainer.innerHTML = '<p class="empty-state">🌫️ Следы путешествий пока не оставлены...</p>';
+      return;
+    }
+    
+    const itemsHtml = recentItems.slice(0, 5).map(item => `
+      <div class="recent-item" onclick="etherealShop.openProduct(${item.id})">
+        <img src="${item.image || '/static/icons/witch_broom.png'}" alt="${item.name}" class="recent-image">
+        <div class="recent-info">
+          <h5>${item.name}</h5>
+          <p>${item.price}₽</p>
+        </div>
+      </div>
+    `).join('');
+    
+    recentContainer.innerHTML = itemsHtml;
+  }
 }
+
+// Экспортируем класс в глобальную область видимости
+window.EtherealShop = EtherealShop;
 
 // Глобальные функции для навигации
 function showScreen(screenName) {
@@ -562,8 +667,3 @@ function showScreen(screenName) {
     window.etherealShop.showScreen(screenName);
   }
 }
-
-// Инициализация приложения
-document.addEventListener('DOMContentLoaded', () => {
-  window.etherealShop = new EtherealShop();
-});

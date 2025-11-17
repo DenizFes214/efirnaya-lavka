@@ -6,44 +6,12 @@
   <title>🌿 Эфирная Лавка ✨</title>
   <link rel="icon" href="/static/icons/witch_broom.png">
   <link rel="stylesheet" href="/static/css/tma-styles.css">
-  <!-- Telegram Apps SDK 2.x -->
-  <script type="module" src="/static/js/tma-init-modern.js"></script>
   <style>
     .image-viewer-nav{position:absolute; top:50%; transform:translateY(-50%); color:#fff; font-size:30px; cursor:pointer; background:rgba(0,0,0,0.5); border-radius:50%; width:50px; height:50px; display:flex; justify-content:center; align-items:center;}
     .image-viewer-prev{left:20px;}
     .image-viewer-next{right:20px;}
     .delivery-option{margin-bottom:15px; padding:10px; border:1px solid #ddd; border-radius:8px;}
     .delivery-fields{margin-top:10px; padding:10px; background:#f9f9f9; border-radius:6px;}
-    .admin-modal{position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.95); z-index:1000; display:none; overflow:auto; padding:10px; box-sizing:border-box;}
-    .admin-header{display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-bottom:10px; border-bottom:1px solid #eee; background:#fff; padding:15px; border-radius:8px;}
-    .admin-close{font-size:24px; cursor:pointer; padding:5px 10px;}
-    .admin-tabs{display:flex; flex-wrap:wrap; gap:5px; margin-bottom:15px;}
-    .admin-tab{padding:8px 12px; background:#f0f0f0; border-radius:8px; cursor:pointer; font-size:14px; white-space:nowrap;}
-    .admin-tab.active{background:#8a2be2; color:white;}
-    .admin-form{background:#fff; padding:15px; border-radius:8px; margin-bottom:15px;}
-    .admin-form input, .admin-form textarea, .admin-form select{width:100%; padding:12px; margin-bottom:10px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box; font-size:16px;}
-    .admin-form button{padding:12px 15px; background:#8a2be2; color:white; border:none; border-radius:6px; cursor:pointer; margin-right:8px; font-size:16px;}
-    .admin-list-item{background:#fff; padding:15px; margin-bottom:10px; border-radius:8px;}
-    .admin-content{max-width:100%; overflow-x:auto;}
-    
-    @media (max-width: 480px) {
-      .admin-tab {
-        padding: 6px 10px;
-        font-size: 12px;
-      }
-      
-      .admin-form input, 
-      .admin-form textarea, 
-      .admin-form select {
-        font-size: 14px;
-        padding: 10px;
-      }
-      
-      .admin-form button {
-        padding: 10px 12px;
-        font-size: 14px;
-      }
-    }
   </style>
 </head>
 <body class="tg-viewport">
@@ -52,7 +20,6 @@
   <header class="shop-header">
     <h1>🌿 Эфирная Лавка ✨</h1>
     <p>Добро пожаловать в мир древней мудрости</p>
-    <div id="adminButton" class="admin-btn" style="display:none;">🧙‍♀️ Алтарь Чародейки</div>
   </header>
 
   <!-- Основной контент -->
@@ -77,7 +44,10 @@
     <!-- Экран каталога товаров -->
     <div id="catalogScreen" style="display:none;">
       <div class="magical-container">
-        <h2 id="categoryTitle">Каталог</h2>
+        <div class="screen-header">
+          <button class="btn-back" onclick="etherealShop.showScreen('home')">← Назад</button>
+          <h2 id="categoryTitle">Каталог</h2>
+        </div>
         <div class="product-grid" id="productGrid">
           <!-- Товары будут загружены динамически -->
         </div>
@@ -94,7 +64,10 @@
     <!-- Экран корзины -->
     <div id="cartScreen" style="display:none;">
       <div class="magical-container">
-        <h2>🛒 Волшебная Корзина</h2>
+        <div class="screen-header">
+          <button class="btn-back" onclick="etherealShop.showScreen('home')">← Назад</button>
+          <h2>🛒 Волшебная Корзина</h2>
+        </div>
         <div id="cartItems">
           <!-- Товары в корзине -->
         </div>
@@ -107,9 +80,51 @@
     <!-- Экран заказов -->
     <div id="ordersScreen" style="display:none;">
       <div class="magical-container">
-        <h2>📜 История Заказов</h2>
+        <div class="screen-header">
+          <button class="btn-back" onclick="etherealShop.showScreen('home')">← Назад</button>
+          <h2>📜 История Заказов</h2>
+        </div>
         <div id="ordersList">
           <!-- Список заказов -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Экран профиля -->
+    <div id="profileScreen" style="display:none;">
+      <div class="magical-container">
+        <div class="screen-header">
+          <button class="btn-back" onclick="etherealShop.showScreen('home')">← Назад</button>
+          <h2>👤 Профиль Путника</h2>
+        </div>
+        <div id="profileContent">
+          <div class="profile-section">
+            <h3>✨ Личные Данные</h3>
+            <div id="userInfo" class="user-info">
+              <!-- Информация о пользователе будет загружена динамически -->
+            </div>
+          </div>
+          
+          <div class="profile-section">
+            <h3>🛒 Настройки Корзины</h3>
+            <div class="settings-group">
+              <label class="setting-item">
+                <input type="checkbox" id="hideDeliveryFields">
+                <span>Скрыть поля доставки для определенных категорий</span>
+              </label>
+              <label class="setting-item">
+                <input type="checkbox" id="saveLastCategory">
+                <span>Запоминать последнюю посещенную категорию</span>
+              </label>
+            </div>
+          </div>
+          
+          <div class="profile-section">
+            <h3>📜 История Просмотров</h3>
+            <div id="recentViewed" class="recent-items">
+              <!-- Недавно просмотренные товары -->
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -136,993 +151,64 @@
         <span class="nav-icon">📜</span>
         <span class="nav-label">Заказы</span>
       </a>
+      <a href="#" class="nav-item" onclick="showScreen('profile')" id="nav-profile">
+        <span class="nav-icon">👤</span>
+        <span class="nav-label">Профиль</span>
+      </a>
     </div>
   </nav>
 
-<!-- Модальное окно для просмотра изображений -->
-<div id="imageViewer" class="image-viewer">
-  <span class="image-viewer-close" onclick="closeImageViewer()">×</span>
-  <span class="image-viewer-nav image-viewer-prev" onclick="changeImage(-1)">‹</span>
-  <img id="viewerImage" src="" alt="">
-  <span class="image-viewer-nav image-viewer-next" onclick="changeImage(1)">›</span>
-</div>
-
-<!-- Модальное окно для ошибки доступа -->
-<div id="errorModal" class="modal">
-  <div class="modal-content">
-    <h3 style="color:#d32f2f; margin-top:0;">Пространство Это не терпит посторонних</h3>
-    <p>Возвращайся на тропу, путник. Возможно, тебе нужен иной ключ — заговорённое слово, особая трава или разрешение самой Хранительницы Ароматов. Или же... быть может, ты просто заблудился в чаще кодов и заклинаний?</p>
-    <button onclick="document.getElementById('errorModal').style.display='none'" style="margin-top:15px; padding:8px 16px; background:#d32f2f; color:white; border:none; border-radius:6px;">Закрыть</button>
+  <!-- Модальное окно для просмотра изображений -->
+  <div id="imageViewer" class="image-viewer">
+    <span class="image-viewer-close" onclick="closeImageViewer()">×</span>
+    <span class="image-viewer-nav image-viewer-prev" onclick="changeImage(-1)">‹</span>
+    <img id="viewerImage" src="" alt="">
+    <span class="image-viewer-nav image-viewer-next" onclick="changeImage(1)">›</span>
   </div>
-</div>
 
-<!-- Модальное окно админ-панели -->
-<div id="adminModal" class="admin-modal">
-  <div class="admin-content">
-    <div class="admin-header">
-      <h2>Алтарь Чародейки</h2>
-      <span class="admin-close" onclick="hideAdminModal()">×</span>
-    </div>
-
-    <div class="admin-tabs">
-      <div class="admin-tab active" data-tab="products">Товары</div>
-      <div class="admin-tab" data-tab="categories">Разделы</div>
-      <div class="admin-tab" data-tab="reviews">Отзывы</div>
-      <div class="admin-tab" data-tab="promotions">Акции</div>
-      <div class="admin-tab" data-tab="orders">Заказы</div>
-    </div>
-
-    <!-- Управление товарами -->
-    <div id="adminProductsTab" class="admin-tab-content">
-      <div class="admin-form">
-        <h3>Управление товарами</h3>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
-          <div>
-            <label>Раздел:</label>
-            <select id="adminCategorySelect" onchange="loadAdminProducts()">
-              <option value="">Выберите раздел</option>
-            </select>
-          </div>
-          <div>
-            <label>Товар:</label>
-            <select id="adminProductSelect">
-              <option value="">Выберите товар</option>
-            </select>
-          </div>
-        </div>
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <button onclick="adminCreateProduct()">Создать</button>
-          <button onclick="adminEditProduct()">Редактировать</button>
-          <button onclick="adminDeleteProduct()">Удалить</button>
-        </div>
-      </div>
-
-      <div id="adminProductForm" class="admin-form" style="display:none;">
-        <h3 id="productFormTitle">Создание товара</h3>
-        <input type="text" id="productName" placeholder="Название товара">
-        <textarea id="productDescription" placeholder="Описание товара" rows="3"></textarea>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-          <input type="number" id="productPrice" placeholder="Цена">
-          <input type="text" id="productStock" placeholder="Остаток">
-        </div>
-        <input type="file" id="productImage" accept="image/*">
-        <div style="margin-top:15px;">
-          <button onclick="adminSaveProduct()">Сохранить</button>
-          <button onclick="document.getElementById('adminProductForm').style.display='none'">Отмена</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Управление разделами -->
-    <div id="adminCategoriesTab" class="admin-tab-content" style="display:none;">
-      <div class="admin-form">
-        <h3>Управление разделами</h3>
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <button onclick="adminCreateCategory()">Создать</button>
-          <button onclick="adminEditCategory()">Редактировать</button>
-          <button onclick="adminDeleteCategory()">Удалить</button>
-        </div>
-      </div>
-
-      <div id="adminCategoryForm" class="admin-form" style="display:none;">
-        <h3 id="categoryFormTitle">Создание раздела</h3>
-        <input type="text" id="categoryName" placeholder="Название раздела">
-        <textarea id="categoryDescription" placeholder="Описание раздела" rows="3"></textarea>
-        <input type="number" id="categoryPosition" placeholder="Позиция" value="0">
-        <input type="file" id="categoryImage" accept="image/*">
-        <div style="margin-top:15px;">
-          <button onclick="adminSaveCategory()">Сохранить</button>
-          <button onclick="document.getElementById('adminCategoryForm').style.display='none'">Отмена</button>
-        </div>
-      </div>
-
-      <div id="adminCategoriesList"></div>
-    </div>
-
-    <!-- Модерация отзывов -->
-    <div id="adminReviewsTab" class="admin-tab-content" style="display:none;">
-      <div class="admin-form">
-        <h3>Модерация отзывов</h3>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
-          <div>
-            <label>Раздел:</label>
-            <select id="adminReviewCategorySelect" onchange="loadAdminReviewProducts()">
-              <option value="">Все разделы</option>
-            </select>
-          </div>
-          <div>
-            <label>Товар:</label>
-            <select id="adminReviewProductSelect">
-              <option value="">Все товары</option>
-            </select>
-          </div>
-        </div>
-        <button onclick="adminLoadReviews()">Загрузить отзывы</button>
-      </div>
-
-      <div id="adminReviewsList"></div>
-    </div>
-
-    <!-- Управление акциями -->
-    <div id="adminPromotionsTab" class="admin-tab-content" style="display:none;">
-      <div class="admin-form">
-        <h3>Управление акциями</h3>
-        <button onclick="adminCreatePromotion()">Создать акцию</button>
-      </div>
-
-      <div id="adminPromotionForm" class="admin-form" style="display:none;">
-        <h3 id="promotionFormTitle">Создание акции</h3>
-        <input type="text" id="promotionTitle" placeholder="Заголовок акции">
-        <textarea id="promotionContent" placeholder="Содержание акции" rows="5"></textarea>
-        <input type="file" id="promotionImage" accept="image/*">
-        <div style="margin-top:15px;">
-          <button onclick="adminSavePromotion()">Сохранить</button>
-          <button onclick="document.getElementById('adminPromotionForm').style.display='none'">Отмена</button>
-        </div>
-      </div>
-
-      <div id="adminPromotionsList"></div>
-    </div>
-
-    <!-- Просмотр заказов -->
-    <div id="adminOrdersTab" class="admin-tab-content" style="display:none;">
-      <div class="admin-form">
-        <h3>История заказов</h3>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
-          <div>
-            <label>С:</label>
-            <input type="date" id="adminStartDate">
-          </div>
-          <div>
-            <label>По:</label>
-            <input type="date" id="adminEndDate">
-          </div>
-        </div>
-        <div style="margin-bottom:15px;">
-          <label>Статус:</label>
-          <select id="adminOrderStatus">
-            <option value="">Все</option>
-            <option value="new">Новые</option>
-            <option value="processing">В обработке</option>
-            <option value="completed">Завершенные</option>
-          </select>
-        </div>
-        <button onclick="adminLoadOrders()">Загрузить</button>
-      </div>
-
-      <div id="adminOrdersList"></div>
-    </div>
-  </div>
-</div>
-
-<nav class="bottom-nav" id="bottomNav">
-  <button type="button" class="tile" data-tab="categories">
-    <span>📦</span>
-    <span>Каталог</span>
-  </button>
-  <button type="button" class="tile" data-tab="favorites">
-    <span>❤️</span>
-    <span>Избранное</span>
-  </button>
-  <button type="button" class="tile" data-tab="cart">
-    <span>🛒</span>
-    <span>Корзина</span>
-  </button>
-  <button type="button" class="tile" data-tab="promotions">
-    <span>🎁</span>
-    <span>Акции</span>
-  </button>
-</nav>
-
-<script>
-const state = {
-  tab: 'categories',
-  categories: [],
-  products: [],
-  currentCategory: null,
-  favorites: new Set(JSON.parse(localStorage.getItem('favorites') || '[]')),
-  cart: JSON.parse(localStorage.getItem('cart') || '[]'),
-  isAdmin: false,
-  showAdminMenu: false,
-  currentProductImages: [],
-  currentImageIndex: 0,
-  adminCategories: [],
-  adminProducts: [],
-  adminPromotions: []
-};
-
-function saveFav() { localStorage.setItem('favorites', JSON.stringify([...state.favorites])); }
-function saveCart() { localStorage.setItem('cart', JSON.stringify(state.cart)); }
-
-async function fetchJSON(u) { 
-  try {
-    const r = await fetch(u); 
-    return r.json();
-  } catch (error) {
-    console.error('Fetch error:', error);
-    return [];
-  }
-}
-
-async function loadCategories() {
-  state.categories = await fetchJSON('/api/categories');
-  console.log('Loaded categories:', state.categories.length);
-}
-
-async function loadProducts(categoryId = null) {
-  const url = categoryId ? `/api/products?category_id=${categoryId}` : '/api/products';
-  state.products = await fetchJSON(url);
-  console.log('Loaded products:', state.products.length);
-}
-
-async function checkAdmin() {
-  try {
-    let userId = null;
-    
-    if (window.Telegram && Telegram.WebApp && Telegram.WebApp.initDataUnsafe && Telegram.WebApp.initDataUnsafe.user) {
-      userId = Telegram.WebApp.initDataUnsafe.user.id;
-    }
-    
-    if (!userId) {
-      const urlParams = new URLSearchParams(window.location.search);
-      userId = urlParams.get('user_id');
-    }
-    
-    if (!userId) {
-      userId = localStorage.getItem('admin_user_id');
-    }
-    
-    if (userId) {
-      localStorage.setItem('admin_user_id', userId);
-      
-      const response = await fetch(`/api/admin/check?user_id=${userId}`);
-      const data = await response.json();
-      state.isAdmin = data.isAdmin;
-      
-      document.getElementById('adminButton').style.display = state.isAdmin ? 'block' : 'none';
-    }
-  } catch (error) {
-    console.error('Admin check failed:', error);
-    state.isAdmin = false;
-    document.getElementById('adminButton').style.display = 'none';
-  }
-}
-
-function render() {
-  const app = document.getElementById('app');
-  
-  if (state.tab === 'categories') {
-    app.innerHTML = '<div class="grid">' + 
-      state.categories.map(cat => `
-        <div class="card" onclick="selectCategory(${cat.id})">
-          <img src="${cat.image_url || '/static/assets/category-placeholder.png'}" alt="${cat.name}"/>
-          <div><strong>${cat.name}</strong></div>
-          <div>${cat.description || ''}</div>
-        </div>
-      `).join('') + '</div>';
-  } 
-  else if (state.tab === 'products' && state.currentCategory) {
-    const categoryProducts = state.products.filter(p => p.category_id == state.currentCategory.id);
-    app.innerHTML = `
-      <div style="padding:12px">
-        <button class="btn" onclick="backToCategories()">← Назад к категориям</button>
-        <h2>${state.currentCategory.name}</h2>
-        <div class="grid">
-          ${categoryProducts.length > 0 ? categoryProducts.map(p => `
-            <div class="card">
-              <img src="${p.image_url || '/static/assets/product-placeholder.png'}" alt="${p.name}" onclick="viewProduct(${p.id})"/>
-              <div>${p.name}</div>
-              <div class="price">${(p.price || 0).toFixed(2)} ₽</div>
-              <div style="display:flex; gap:8px">
-                <button class="btn" onclick="viewProduct(${p.id})">Открыть</button>
-                <button class="btn fav" onclick="toggleFav(${p.id})">${state.favorites.has(p.id) ? '★' : '☆'}</button>
-              </div>
-            </div>
-          `).join('') : '<div style="padding:20px; text-align:center">Товары не найдены</div>'}
-        </div>
-      </div>
-    `;
-  }
-  else if (state.tab === 'favorites') {
-    const favList = state.products.filter(p => state.favorites.has(p.id));
-    app.innerHTML = '<div class="grid">' + (favList.length > 0 ? favList.map(p => `
-      <div class="card">
-        <img src="${p.image_url || ''}" alt="${p.name}" onclick="viewProduct(${p.id})"/>
-        <div>${p.name}</div>
-        <div class="price">${p.price} ₽</div>
-        <button class="btn" onclick="viewProduct(${p.id})">Открыть</button>
-      </div>
-    `).join('') : '<div style="padding:20px; text-align:center">Нет избранных товаров</div>') + '</div>';
-  }
-  else if (state.tab === 'cart') {
-    const total = state.cart.reduce((s, i) => s + i.price * i.qty, 0);
-    app.innerHTML = `
-      <div style="padding:12px">
-        <h2>Корзина</h2>
-        <button class="btn" onclick="state.tab='categories'; render();" style="margin-bottom:16px;">← Назад за покупками</button>
-        ${state.cart.length > 0 ? state.cart.map((i, idx) => `
-          <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px">
-            <div style="flex:1">${i.name}</div>
-            <div>${i.qty} × ${i.price} ₽</div>
-            <button class="btn" onclick="decQty(${idx})">-</button>
-            <button class="btn" onclick="incQty(${idx})">+</button>
-            <button class="btn" onclick="rmItem(${idx})">×</button>
-          </div>
-        `).join('') + `
-        <hr>
-        <h3>Способ доставки</h3>
-        <div class="delivery-option">
-          <input type="radio" id="pickup" name="delivery" value="pickup" checked>
-          <label for="pickup">Самовывоз</label>
-        </div>
-        <div class="delivery-option">
-          <input type="radio" id="post" name="delivery" value="post">
-          <label for="post">Почта России</label>
-          <div id="postFields" class="delivery-fields" style="display:none">
-            <input type="text" id="postIndex" placeholder="Индекс" style="width:100%; margin-bottom:5px">
-            <input type="text" id="postCity" placeholder="Город" style="width:100%; margin-bottom:5px">
-            <input type="text" id="postStreet" placeholder="Улица" style="width:100%; margin-bottom:5px">
-            <input type="text" id="postHouse" placeholder="Дом" style="width:100%; margin-bottom:5px">
-            <input type="text" id="postApartment" placeholder="Квартира" style="width:100%">
-          </div>
-        </div>
-        <div class="delivery-option">
-          <input type="radio" id="yandex" name="delivery" value="yandex">
-          <label for="yandex">Яндекс доставка</label>
-          <div id="yandexFields" class="delivery-fields" style="display:none">
-            <input type="text" id="yandexPoint" placeholder="Пункт выдачи" style="width:100%">
-          </div>
-        </div>
-        <hr>
-        <div><strong>Итого:</strong> ${total.toFixed(2)} ₽</div>
-        <button class="btn primary" onclick="checkout()">Оформить</button>
-        </div>` : '<div style="padding:20px; text-align:center">Корзина пуста</div>'}
-      </div>
-    `;
-    
-    document.querySelectorAll('input[name="delivery"]').forEach(input => {
-      input.addEventListener('change', function() {
-        document.getElementById('postFields').style.display = this.value === 'post' ? 'block' : 'none';
-        document.getElementById('yandexFields').style.display = this.value === 'yandex' ? 'block' : 'none';
-      });
-    });
-  }
-  else if (state.tab === 'promotions') {
-    fetch('/api/promotions')
-      .then(r => r.json())
-      .then(promotions => {
-        app.innerHTML = '<div style="padding:12px">' +
-          '<h2>Акции</h2>' +
-          (promotions.length > 0 ? promotions.map(p => `
-            <div class="card" style="margin-bottom:15px">
-              ${p.image_url ? `<img src="${p.image_url}" alt="${p.title}" style="width:100%; height:200px; object-fit:cover; border-radius:8px; margin-bottom:10px">` : ''}
-              <h3>${p.title}</h3>
-              <p>${p.content}</p>
-            </div>
-          `).join('') : '<div style="padding:20px; text-align:center">Акций пока нет</div>') +
-          '</div>';
-      })
-      .catch(() => {
-        app.innerHTML = '<div style="padding:12px"><h2>Акции</h2><p>Не удалось загрузить акции</p></div>';
-      });
-  }
-}
-
-function selectCategory(categoryId) {
-  state.currentCategory = state.categories.find(c => c.id === categoryId);
-  state.tab = 'products';
-  loadProducts(categoryId).then(render);
-}
-
-function backToCategories() {
-  state.tab = 'categories';
-  state.currentCategory = null;
-  render();
-}
-
-function toggleFav(id) {
-  if (state.favorites.has(id)) state.favorites.delete(id); 
-  else state.favorites.add(id);
-  saveFav(); 
-  render();
-}
-
-function viewProduct(id) {
-  const p = state.products.find(x => x.id === id); 
-  if (!p) return;
-  
-  fetch('/api/product/' + id + '/images')
-    .then(r => r.json())
-    .then(images => {
-      state.currentProductImages = images;
-      if (images.length > 0) {
-        openImageViewer(0);
-      }
-      
-      const app = document.getElementById('app');
-      app.innerHTML = `<div style="padding:12px">
-        <button class="btn" onclick="backToProducts()">← Назад</button>
-        ${images.length > 0 ? `<img src="${images[0]}" style="width:100%; max-height:240px; object-fit:cover; border-radius:12px; cursor:pointer" onclick="openImageViewer(0)"/>` : ''}
-        <div class="gallery" id="gallery"></div>
-        <h2>${p.name}</h2>
-        <div class="price">${p.price} ₽</div>
-        <p>${p.description || ''}</p>
-        <div style="display:flex; gap:8px">
-          <button class="btn primary" onclick="addToCart(${p.id})">В корзину</button>
-          <button class="btn fav" onclick="toggleFav(${p.id})">${state.favorites.has(p.id) ? '★' : '☆'}</button>
-        </div>
-        <div id="reviewsSection"></div>
-      </div>`;
-      
-      fetch('/api/product/' + id + '/reviews')
-        .then(r => r.json())
-        .then(reviews => {
-          const reviewsSection = document.getElementById('reviewsSection');
-          if (reviews.length > 0) {
-            reviewsSection.innerHTML = '<h3>Отзывы</h3>' + reviews.map(r => `
-              <div style="border:1px solid #eee; border-radius:8px; padding:10px; margin-bottom:10px">
-                <div><strong>${r.username || 'Покупатель'}</strong> • Рейтинг: ${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div>
-                <div>${r.text}</div>
-                ${r.admin_comment ? `<div style="margin-top:8px; padding:8px; background:#f9f9f9; border-radius:4px"><strong>Комментарий магазина:</strong> ${r.admin_comment}</div>` : ''}
-              </div>
-            `).join('');
-          }
-        })
-        .catch(() => {});
-    })
-    .catch(() => {});
-}
-
-function backToProducts() {
-  state.tab = 'products';
-  render();
-}
-
-function openImageViewer(index) {
-  state.currentImageIndex = index;
-  document.getElementById('viewerImage').src = state.currentProductImages[index];
-  document.getElementById('imageViewer').style.display = 'flex';
-}
-
-function closeImageViewer() {
-  document.getElementById('imageViewer').style.display = 'none';
-}
-
-function changeImage(direction) {
-  let newIndex = state.currentImageIndex + direction;
-  if (newIndex < 0) newIndex = state.currentProductImages.length - 1;
-  if (newIndex >= state.currentProductImages.length) newIndex = 0;
-  state.currentImageIndex = newIndex;
-  document.getElementById('viewerImage').src = state.currentProductImages[newIndex];
-}
-
-function addToCart(pid) {
-  const p = state.products.find(x => x.id === pid);
-  const found = state.cart.find(x => x.id === pid);
-  if (found) found.qty++; 
-  else state.cart.push({id: p.id, name: p.name, price: p.price, qty: 1});
-  saveCart(); 
-  alert('Добавлено в корзину');
-}
-
-function decQty(i) { 
-  state.cart[i].qty = Math.max(1, state.cart[i].qty - 1); 
-  saveCart(); 
-  render(); 
-}
-
-function incQty(i) { 
-  state.cart[i].qty++; 
-  saveCart(); 
-  render(); 
-}
-
-function rmItem(i) { 
-  state.cart.splice(i, 1); 
-  saveCart(); 
-  render(); 
-}
-
-async function checkout() {
-  const deliveryMethod = document.querySelector('input[name="delivery"]:checked').value;
-  let deliveryAddress = '';
-  let deliveryPoint = '';
-  
-  if (deliveryMethod === 'post') {
-    const index = document.getElementById('postIndex').value;
-    const city = document.getElementById('postCity').value;
-    const street = document.getElementById('postStreet').value;
-    const house = document.getElementById('postHouse').value;
-    const apartment = document.getElementById('postApartment').value;
-    
-    if (!index || !city || !street || !house) {
-      alert('Пожалуйста, заполните все обязательные поля адреса');
-      return;
-    }
-    
-    deliveryAddress = `Индекс: ${index}, Город: ${city}, Улица: ${street}, Дом: ${house}, Квартира: ${apartment}`;
-  } else if (deliveryMethod === 'yandex') {
-    deliveryPoint = document.getElementById('yandexPoint').value;
-    if (!deliveryPoint) {
-      alert('Пожалуйста, укажите пункт выдачи');
-      return;
-    }
-  }
-  
-  const comment = prompt('Комментарий к заказу (пожелания):', '');
-  if (comment === null) return;
-  
-  const user = Telegram.WebApp.initDataUnsafe.user;
-  const userId = user?.id || 0;
-  const username = user?.username || user?.first_name || 'Покупатель';
-  
-  const total = state.cart.reduce((s, i) => s + i.price * i.qty, 0);
-  
-  try {
-    const r = await fetch('/api/orders', {
-      method: 'POST', 
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        user_id: userId,
-        username: username,
-        items: state.cart, 
-        total, 
-        comment, 
-        delivery_method: deliveryMethod,
-        delivery_address: deliveryAddress,
-        delivery_point: deliveryPoint
-      })
-    });
-    
-    if (!r.ok) {
-      const errorText = await r.text();
-      throw new Error(`HTTP error! status: ${r.status}, message: ${errorText}`);
-    }
-    
-    const data = await r.json();
-    if (data.id) { 
-      alert('Заказ оформлен! №' + data.id); 
-      state.cart = []; 
-      saveCart(); 
-      state.tab = 'categories'; 
-      render(); 
-    } else {
-      throw new Error('Не удалось оформить заказ');
-    }
-  } catch (error) {
-    console.error('Checkout error:', error);
-    alert('Ошибка при оформлении заказа: ' + error.message);
-  }
-}
-
-// Админ-функции
-function showAdminModal() {
-  document.getElementById('adminModal').style.display = 'flex';
-  loadAdminCategories();
-  loadAdminPromotions();
-}
-
-function hideAdminModal() {
-  document.getElementById('adminModal').style.display = 'none';
-}
-
-// Переключение вкладок админ-панели
-document.querySelectorAll('.admin-tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.admin-tab-content').forEach(t => t.style.display = 'none');
-    
-    tab.classList.add('active');
-    document.getElementById('admin' + capitalize(tab.dataset.tab) + 'Tab').style.display = 'block';
-  });
-});
-
-function capitalize(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-// Загрузка категорий для админки
-async function loadAdminCategories() {
-  try {
-    state.adminCategories = await fetchJSON('/api/categories');
-    const categorySelect = document.getElementById('adminCategorySelect');
-    const reviewCategorySelect = document.getElementById('adminReviewCategorySelect');
-    
-    categorySelect.innerHTML = '<option value="">Выберите раздел</option>' + 
-      state.adminCategories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-    
-    reviewCategorySelect.innerHTML = '<option value="">Все разделы</option>' + 
-      state.adminCategories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-  } catch (error) {
-    console.error('Error loading categories:', error);
-    alert('Ошибка загрузки разделов');
-  }
-}
-
-// Загрузка товаров для выбранной категории
-async function loadAdminProducts() {
-  const categoryId = document.getElementById('adminCategorySelect').value;
-  if (!categoryId) {
-    document.getElementById('adminProductSelect').innerHTML = '<option value="">Выберите товар</option>';
-    return;
-  }
-  
-  try {
-    state.adminProducts = await fetchJSON('/api/products?category_id=' + categoryId);
-    const productSelect = document.getElementById('adminProductSelect');
-    
-    productSelect.innerHTML = '<option value="">Выберите товар</option>' + 
-      state.adminProducts.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-  } catch (error) {
-    console.error('Error loading products:', error);
-    alert('Ошибка загрузки товаров');
-  }
-}
-
-// Загрузка товаров для модерации отзывов
-async function loadAdminReviewProducts() {
-  const categoryId = document.getElementById('adminReviewCategorySelect').value;
-  let url = '/api/products';
-  if (categoryId) url += '?category_id=' + categoryId;
-  
-  try {
-    const products = await fetchJSON(url);
-    const productSelect = document.getElementById('adminReviewProductSelect');
-    
-    productSelect.innerHTML = '<option value="">Все товары</option>' + 
-      products.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-  } catch (error) {
-    console.error('Error loading products for review:', error);
-  }
-}
-
-// Создание товара
-function adminCreateProduct() {
-  const categoryId = document.getElementById('adminCategorySelect').value;
-  if (!categoryId) {
-    alert('Сначала выберите раздел');
-    return;
-  }
-  
-  const form = document.getElementById('adminProductForm');
-  form.style.display = 'block';
-  document.getElementById('productFormTitle').textContent = 'Создание товара';
-  document.getElementById('productName').value = '';
-  document.getElementById('productDescription').value = '';
-  document.getElementById('productPrice').value = '';
-  document.getElementById('productStock').value = '';
-  document.getElementById('productImage').value = '';
-}
-
-// Сохранение товара
-async function adminSaveProduct() {
-  const categoryId = document.getElementById('adminCategorySelect').value;
-  const name = document.getElementById('productName').value;
-  const description = document.getElementById('productDescription').value;
-  const price = document.getElementById('productPrice').value;
-  const stock = document.getElementById('productStock').value;
-  const imageFile = document.getElementById('productImage').files[0];
-  
-  if (!name || !price || !categoryId) {
-    alert('Заполните обязательные поля: название, цена и раздел');
-    return;
-  }
-  
-  const formData = new FormData();
-  formData.append('category_id', categoryId);
-  formData.append('name', name);
-  formData.append('description', description);
-  formData.append('price', price);
-  formData.append('stock', stock);
-  
-  if (imageFile) {
-    formData.append('image', imageFile);
-  }
-  
-  try {
-    const response = await fetch('/api/admin/products', {
-      method: 'POST',
-      body: formData
-    });
-    
-    if (response.ok) {
-      alert('Товар успешно создан');
-      document.getElementById('adminProductForm').style.display = 'none';
-      loadAdminProducts();
-    } else {
-      const errorText = await response.text();
-      throw new Error(errorText || 'Ошибка сервера');
-    }
-  } catch (error) {
-    console.error('Error saving product:', error);
-    alert('Ошибка при сохранении товара: ' + error.message);
-  }
-}
-
-// Редактирование товара
-function adminEditProduct() {
-  const productId = document.getElementById('adminProductSelect').value;
-  if (!productId) {
-    alert('Сначала выберите товар');
-    return;
-  }
-  
-  const product = state.adminProducts.find(p => p.id == productId);
-  if (!product) {
-    alert('Товар не найден');
-    return;
-  }
-  
-  const form = document.getElementById('adminProductForm');
-  form.style.display = 'block';
-  document.getElementById('productFormTitle').textContent = 'Редактирование товара';
-  document.getElementById('productName').value = product.name;
-  document.getElementById('productDescription').value = product.description || '';
-  document.getElementById('productPrice').value = product.price;
-  document.getElementById('productStock').value = product.stock || '';
-}
-
-// Обновление товара
-async function adminUpdateProduct(productId) {
-  const name = document.getElementById('productName').value;
-  const description = document.getElementById('productDescription').value;
-  const price = document.getElementById('productPrice').value;
-  const stock = document.getElementById('productStock').value;
-  const imageFile = document.getElementById('productImage').files[0];
-  
-  if (!name || !price) {
-    alert('Заполните обязательные поля: название и цена');
-    return;
-  }
-  
-  const formData = new FormData();
-  formData.append('category_id', document.getElementById('adminCategorySelect').value);
-  formData.append('name', name);
-  formData.append('description', description);
-  formData.append('price', price);
-  formData.append('stock', stock);
-  
-  if (imageFile) {
-    formData.append('image', imageFile);
-  }
-  
-  try {
-    const response = await fetch('/api/admin/products/' + productId, {
-      method: 'PUT',
-      body: formData
-    });
-    
-    if (response.ok) {
-      alert('Товар успешно обновлен');
-      document.getElementById('adminProductForm').style.display = 'none';
-      loadAdminProducts();
-    } else {
-      const errorText = await response.text();
-      throw new Error(errorText || 'Ошибка сервера');
-    }
-  } catch (error) {
-    console.error('Error updating product:', error);
-    alert('Ошибка при обновлении товара: ' + error.message);
-  }
-}
-
-// Удаление товара
-async function adminDeleteProduct() {
-  const productId = document.getElementById('adminProductSelect').value;
-  if (!productId) {
-    alert('Сначала выберите товар');
-    return;
-  }
-  
-  if (!confirm('Вы уверены, что хотите удалить этот товар?')) {
-    return;
-  }
-  
-  try {
-    const response = await fetch('/api/admin/products/' + productId, {
-      method: 'DELETE'
-    });
-    
-    if (response.ok) {
-      alert('Товар успешно удален');
-      loadAdminProducts();
-    } else {
-      const errorText = await response.text();
-      throw new Error(errorText || 'Ошибка сервера');
-    }
-  } catch (error) {
-    console.error('Error deleting product:', error);
-    alert('Ошибка при удалении товара: ' + error.message);
-  }
-}
-
-// Создание раздела
-function adminCreateCategory() {
-  const form = document.getElementById('adminCategoryForm');
-  form.style.display = 'block';
-  document.getElementById('categoryFormTitle').textContent = 'Создание раздела';
-  document.getElementById('categoryName').value = '';
-  document.getElementById('categoryDescription').value = '';
-  document.getElementById('categoryPosition').value = '0';
-  document.getElementById('categoryImage').value = '';
-}
-
-// Сохранение раздела
-async function adminSaveCategory() {
-  const name = document.getElementById('categoryName').value;
-  const description = document.getElementById('categoryDescription').value;
-  const position = document.getElementById('categoryPosition').value;
-  const imageFile = document.getElementById('categoryImage').files[0];
-  
-  if (!name) {
-    alert('Заполните обязательное поле: название');
-    return;
-  }
-  
-  const formData = new FormData();
-  formData.append('name', name);
-  formData.append('description', description);
-  formData.append('position', position);
-  
-  if (imageFile) {
-    formData.append('image', imageFile);
-  }
-  
-  try {
-    const response = await fetch('/api/admin/categories', {
-      method: 'POST',
-      body: formData
-    });
-    
-    if (response.ok) {
-      alert('Раздел успешно создан');
-      document.getElementById('adminCategoryForm').style.display = 'none';
-      loadAdminCategories();
-    } else {
-      const errorText = await response.text();
-      throw new Error(errorText || 'Ошибка сервера');
-    }
-  } catch (error) {
-    console.error('Error saving category:', error);
-    alert('Ошибка при сохранении раздела: ' + error.message);
-  }
-}
-
-// Загрузка акций
-async function loadAdminPromotions() {
-  try {
-    state.adminPromotions = await fetchJSON('/api/admin/promotions');
-    const promotionsList = document.getElementById('adminPromotionsList');
-    
-    promotionsList.innerHTML = state.adminPromotions.length > 0 ? state.adminPromotions.map(p => `
-      <div class="admin-list-item">
-        <div style="display:flex; justify-content:space-between;">
-          <strong>${p.title}</strong>
-          <span>${p.active ? '✅ Активна' : '❌ Неактивна'}</span>
-        </div>
-        <div>${p.content}</div>
-        ${p.image_url ? `<img src="${p.image_url}" style="max-width:200px; max-height:200px; margin-top:10px;">` : ''}
-        <div style="margin-top:10px;">
-          <button onclick="adminEditPromotion(${p.id})">Редактировать</button>
-          <button onclick="adminDeletePromotion(${p.id})">Удалить</button>
-        </div>
-      </div>
-    `).join('') : '<div>Нет активных акций</div>';
-  } catch (error) {
-    console.error('Error loading promotions:', error);
-    alert('Ошибка загрузки акций');
-  }
-}
-
-// Создание акции
-function adminCreatePromotion() {
-  const form = document.getElementById('adminPromotionForm');
-  form.style.display = 'block';
-  document.getElementById('promotionFormTitle').textContent = 'Создание акции';
-  document.getElementById('promotionTitle').value = '';
-  document.getElementById('promotionContent').value = '';
-  document.getElementById('promotionImage').value = '';
-}
-
-// Сохранение акции
-async function adminSavePromotion() {
-  const title = document.getElementById('promotionTitle').value;
-  const content = document.getElementById('promotionContent').value;
-  const imageFile = document.getElementById('promotionImage').files[0];
-  
-  if (!title || !content) {
-    alert('Заполните обязательные поля: заголовок и содержание');
-    return;
-  }
-  
-  const formData = new FormData();
-  formData.append('title', title);
-  formData.append('content', content);
-  
-  if (imageFile) {
-    formData.append('image', imageFile);
-  }
-  
-  try {
-    const response = await fetch('/api/admin/promotions', {
-      method: 'POST',
-      body: formData
-    });
-    
-    if (response.ok) {
-      alert('Акция успешно создана');
-      document.getElementById('adminPromotionForm').style.display = 'none';
-      loadAdminPromotions();
-    } else {
-      const errorText = await response.text();
-      throw new Error(errorText || 'Ошибка сервера');
-    }
-  } catch (error) {
-    console.error('Error saving promotion:', error);
-    alert('Ошибка при сохранении акции: ' + error.message);
-  }
-}
-
-// Обработчики событий
-window.addEventListener('click', (e) => {
-  const t = e.target.closest('[data-tab]');
-  if (!t) return;
-  state.tab = t.dataset.tab;
-  render();
-});
-
-document.getElementById('adminButton').addEventListener('click', showAdminModal);
-
-// Делаем функции глобальными для обработчиков событий
-window.toggleFav = toggleFav;
-window.viewProduct = viewProduct;
-window.addToCart = addToCart;
-window.decQty = decQty;
-window.incQty = incQty;
-  // Подключаем основной магический скрипт
-  </script>
+  <!-- Подключение скриптов -->
   <script src="/static/js/tma-init.js"></script>
   <script src="/static/js/magical-app.js"></script>
-window.adminCreateCategory = adminCreateCategory;
-window.adminSaveCategory = adminSaveCategory;
-window.loadAdminPromotions = loadAdminPromotions;
-window.adminCreatePromotion = adminCreatePromotion;
-window.adminSavePromotion = adminSavePromotion;
-
-async function init() {
-  try {
-    if (window.Telegram && Telegram.WebApp) {
-      Telegram.WebApp.ready();
+  <script>
+    console.log('🌟 HTML загружен, начинаем инициализацию...');
+    
+    // Проверяем загрузку всех зависимостей
+    function checkDependencies() {
+      if (typeof EtherealShop !== 'undefined' && 
+          typeof TelegramWebAppIntegration !== 'undefined') {
+        console.log('✅ Все зависимости загружены');
+        return true;
+      }
+      console.log('⏳ Ожидаем загрузку зависимостей...');
+      console.log('EtherealShop:', typeof EtherealShop);
+      console.log('TelegramWebAppIntegration:', typeof TelegramWebAppIntegration);
+      return false;
     }
-    await checkAdmin();
-    await loadCategories();
-    render();
-  } catch (error) {
-    console.error('Initialization error:', error);
-  }
-}
 
-init();
-</script>
+    // Инициализация приложения после загрузки всех скриптов
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('🔮 DOM готов, инициализируем Эфирную Лавку...');
+      
+      // Ждем загрузки всех скриптов
+      const initApp = () => {
+        if (checkDependencies()) {
+          console.log('🚀 Создаем экземпляр EtherealShop...');
+          window.etherealShop = new EtherealShop();
+        } else {
+          setTimeout(initApp, 100);
+        }
+      };
+      
+      initApp();
+    });
+
+    // Дополнительная инициализация для Telegram WebApp
+    if (window.Telegram?.WebApp) {
+      console.log('📱 Telegram WebApp найден');
+      window.Telegram.WebApp.ready();
+    } else {
+      console.log('📱 Telegram WebApp не найден, работаем в обычном режиме');
+    }
+  </script>
 </body>
 </html>
